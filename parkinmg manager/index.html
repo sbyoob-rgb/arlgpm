@@ -130,6 +130,15 @@
       color: #60b4ff;
     }
 
+    /* ── Chrome 자동완성 배경색 제거 ── */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active  {
+        -webkit-box-shadow: 0 0 0 30px #080b14 inset !important;
+        -webkit-text-fill-color: #dde !important;
+    }
+
     /* Header */
     #header {
       background: linear-gradient(90deg, #0d1117, #131929);
@@ -1163,14 +1172,18 @@
             <label class="form-label" id="phone-label">📞 연락처 <span id="phone-hint"
                 style="color:#556;font-weight:400;font-size:13px">3회 이상 적발 차량은 연락처를 기입해 주세요.</span></label>
             <div style="display:flex;align-items:center;gap:6px">
+              <!-- 자동완성 방지용 가짜 필드 -->
+              <input type="text" style="display:none" autocomplete="username" />
+              <input type="password" style="display:none" autocomplete="new-password" />
+              
               <input class="form-input phone-input" id="phone1" placeholder="010" maxlength="3" inputmode="numeric"
-                pattern="[0-9]*" autocomplete="off" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
+                pattern="[0-9]*" autocomplete="new-password" name="phone_prefix" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
               <span style="color:#334;font-size:18px;flex-shrink:0">—</span>
               <input class="form-input phone-input" id="phone2" placeholder="0000" maxlength="4" inputmode="numeric"
-                pattern="[0-9]*" autocomplete="off" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
+                pattern="[0-9]*" autocomplete="new-password" name="phone_middle" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
               <span style="color:#334;font-size:18px;flex-shrink:0">—</span>
-              <input class="form-input phone-input" id="phone3" placeholder="0000" maxlength="4" inputmode="numeric"
-                pattern="[0-9]*" autocomplete="off" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
+              <input class="form-input phone-input" id="phone-suffix" placeholder="0000" maxlength="4" inputmode="numeric"
+                pattern="[0-9]*" autocomplete="new-password" name="phone_last" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
             </div>
           </div>
           <button class="submit-btn" id="submit-btn">💾 저장</button>
@@ -1792,26 +1805,26 @@
     document.getElementById('phone1').addEventListener('input', function () {
       this.value = this.value.replace(/[^0-9]/g, '');
       if (this.value.length >= 3) document.getElementById('phone2').focus();
-      ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), false));
+      ['phone1', 'phone2', 'phone-suffix'].forEach(id => setFieldError(document.getElementById(id), false));
     });
     document.getElementById('phone2').addEventListener('input', function () {
       this.value = this.value.replace(/[^0-9]/g, '');
-      if (this.value.length >= 4) document.getElementById('phone3').focus();
-      ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), false));
+      if (this.value.length >= 4) document.getElementById('phone-suffix').focus();
+      ['phone1', 'phone2', 'phone-suffix'].forEach(id => setFieldError(document.getElementById(id), false));
     });
-    document.getElementById('phone3').addEventListener('input', function () {
+    document.getElementById('phone-suffix').addEventListener('input', function () {
       this.value = this.value.replace(/[^0-9]/g, '');
-      ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), false));
+      ['phone1', 'phone2', 'phone-suffix'].forEach(id => setFieldError(document.getElementById(id), false));
     });
     document.getElementById('phone2').addEventListener('keydown', function (e) {
       if (e.key === 'Backspace' && this.value === '') document.getElementById('phone1').focus();
     });
-    document.getElementById('phone3').addEventListener('keydown', function (e) {
+    document.getElementById('phone-suffix').addEventListener('keydown', function (e) {
       if (e.key === 'Backspace' && this.value === '') document.getElementById('phone2').focus();
     });
 
     document.getElementById('submit-btn').addEventListener('click', addRecord);
-    document.getElementById('phone3').addEventListener('keydown', e => { if (e.key === 'Enter') addRecord(); });
+    document.getElementById('phone-suffix').addEventListener('keydown', e => { if (e.key === 'Enter') addRecord(); });
 
     async function addRecord() {
       if (!isConnected) { showAlert('error', 'Supabase에 연결되어 있지 않습니다.'); return; }
@@ -1828,21 +1841,19 @@
       const plate = (pA + pB).toUpperCase();
       const p1 = document.getElementById('phone1').value.trim();
       const p2 = document.getElementById('phone2').value.trim();
-      const p3 = document.getElementById('phone3').value.trim();
+      const p3 = document.getElementById('phone-suffix').value.trim();
       const note = [p1, p2, p3].filter(Boolean).join('-');
 
       // 연락처 필수 검증 (2회 이상 적발 차량)
       const summary0 = {}; records.forEach(r => { summary0[r.plate] = (summary0[r.plate] || 0) + 1; });
       const prevCount = summary0[plate] || 0;
       if (prevCount >= 2 && (!p1 || !p2 || !p3)) {
-        ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), true));
+        ['phone1', 'phone2', 'phone-suffix'].forEach(id => setFieldError(document.getElementById(id), true));
         missing.push('연락처');
         hasError = true;
       }
 
       if (hasError) { showAlert('error', `⚠ 필수 항목을 입력하세요: ${missing.join(', ')}`); return; }
-      const id = Date.now() + '-' + Math.random().toString(36).slice(2, 9);
-
       const btn = document.getElementById('submit-btn');
 
       // ── 저장 중 상태
@@ -1851,8 +1862,8 @@
       btn.style.cssText = 'background:linear-gradient(135deg,#1a3050,#0f2040);border-color:#2a5080;color:#60b4ff;cursor:not-allowed;';
 
       try {
-        await db.insertRecord({ id, plate, date, staff, note });
-        records.push({ id, plate, date, staff, note });
+        const newRecord = await db.insertRecord({ plate, date, staff, note });
+        records.push(newRecord);
         const summary = {}; records.forEach(r => { summary[r.plate] = (summary[r.plate] || 0) + 1; });
         const n = summary[plate];
 
@@ -1867,7 +1878,7 @@
         document.getElementById('input-staff').value = '';
         document.getElementById('phone1').value = '';
         document.getElementById('phone2').value = '';
-        document.getElementById('phone3').value = '';
+        document.getElementById('phone-suffix').value = '';
         document.getElementById('plate-preview').style.display = 'none';
         [plateA, plateB, document.getElementById('input-date'), document.getElementById('input-staff')].forEach(el => setFieldError(el, false));
         renderAll();
