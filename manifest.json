@@ -1,0 +1,17 @@
+{
+  "name": "불법주차 관리 시스템",
+  "short_name": "주차관리",
+  "description": "아파트 불법주차 적발 및 입차제한 관리 시스템",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0c12",
+  "theme_color": "#0a0c12",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2830/2830305.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
