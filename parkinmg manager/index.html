@@ -1841,7 +1841,12 @@
       if (!isConnected) { showAlert('error', 'Supabase에 연결되어 있지 않습니다.'); return; }
       const pA = plateA.value.trim(), pB = plateB.value.trim();
       const date = document.getElementById('input-date').value;
-      const staff = document.getElementById('input-staff').value;
+      let staff = document.getElementById('input-staff').value;
+      
+      const isValidUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+      if (staff && !isValidUUID(staff)) {
+        staff = ''; // 잘못된 형식일 경우 필수 입력 에러 유발
+      }
 
       let hasError = false; const missing = [];
       [plateA, plateB, document.getElementById('input-date'), document.getElementById('input-staff')].forEach(el => setFieldError(el, false));
@@ -2066,7 +2071,14 @@
             const sName = (row['담당자'] || '').toString().trim();
             // 담당자 이름이 있으면 목록에서 ID를 찾고, 없으면 그냥 이름을 넣음 (DB에서 TEXT이므로 허용됨)
             const sObj = sName ? staffList.find(s => s.name === sName) : null;
-            imported.push({ plate, date: dateStr, staff: sObj ? sObj.id : sName, note });
+            let finalStaff = sObj ? sObj.id : sName;
+            
+            const isValidUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+            if (finalStaff && !isValidUUID(finalStaff)) {
+              finalStaff = null; // 담당자 미지정으로 처리
+            }
+            
+            imported.push({ plate, date: dateStr, staff: finalStaff, note });
           });
           if (imported.length === 0) { showAlert('error', '유효한 행이 없습니다.'); return; }
           pendingImport = imported;
