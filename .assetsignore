@@ -1,0 +1,10 @@
+_worker.js
+functions/
+backup/
+schema.sql
+seed_data.sql
+export_data.py
+wrangler.toml
+package.json
+package-lock.json
+.git/
