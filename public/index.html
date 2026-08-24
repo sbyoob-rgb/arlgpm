@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="아파트 불법주차 차량 적발 및 입차제한 기록을 효율적으로 관리하는 시스템입니다." />
+  <meta name="theme-color" content="#0a0c12" />
+  <title>불법주차 관리 시스템</title>
+  
+  <!-- PWA & Mobile -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2830/2830305.png" />
+  
+  <!-- Performance Optimization: Preconnect & DNS Prefetch -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Critical Fonts & Styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Library Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #0a0c12;
+      font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+      color: #e8eaf0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .6
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #111
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #2a5080 !important;
+    }
+
+    input[type="date"] {
+      color-scheme: dark;
+    }
+
+
+    /* ── Spinner / Status ── */
+    .spinner {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid #334;
+      border-top-color: #60b4ff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    #conn-status {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .conn-ok {
+      background: #0a1f14;
+      border: 1px solid #2ecc7144;
+      color: #4eca8b;
+    }
+
+    .conn-err {
+      background: #1a0808;
+      border: 1px solid #ff2d2d44;
+      color: #ff6b6b;
+    }
+
+    .conn-loading {
+      background: #0f1a30;
+      border: 1px solid #2a4070;
+      color: #60b4ff;
+    }
+
+    /* Header */
+    #header {
+      background: linear-gradient(90deg, #0d1117, #131929);
+      border-bottom: 1px solid #1e2a45;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 8px 20px;
+    }
+
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #ff4444, #ff9500);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: -.5px;
+      color: #fff;
+    }
+
+    .header-sub {
+      font-size: 11px;
+      color: #556;
+      letter-spacing: .5px;
+    }
+
+    .tab-nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #778;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: 400;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: #1a1e2e !important;
+    }
+
+    .tab-btn.active {
+      background: #1e3a5f;
+      border-color: #2a5080;
+      color: #60b4ff;
+      font-weight: 700;
+    }
+
+    /* Alert */
+    #alert-banner {
+      display: none;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      animation: slideIn .3s ease;
+    }
+
+    /* Main */
+    #main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeIn .4s;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+
+    .stat-icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #556;
+      margin-top: 2px;
+    }
+
+    /* Warning block */
+    #warn-block {
+      background: linear-gradient(135deg, #1a0000, #0f0a0a);
+      border: 1px solid #ff2d2d44;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .warn-block-title {
+      font-weight: 800;
+      color: #ff4444;
+      margin-bottom: 14px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .warn-icon {
+      animation: pulse 1s infinite;
+      display: inline-block;
+    }
+
+    .warn-vehicle-row {
+      background: #1a0808;
+      border: 1px solid #ff2d2d33;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .warn-plate {
+      font-weight: 800;
+      font-size: 18px;
+      color: #ff6b6b;
+      letter-spacing: 2px;
+    }
+
+    .warn-meta {
+      font-size: 12px;
+      color: #667;
+      margin-top: 3px;
+    }
+
+    .warn-badge {
+      background: #ff2d2d;
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 16px;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 0 16px #ff2d2d66;
+      animation: pulse 1.2s infinite;
+    }
+
+    /* Card */
+    .card {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #1a2338;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .search-input {
+      background: #0a0d17;
+      border: 1px solid #1e2a40;
+      border-radius: 8px;
+      padding: 7px 14px;
+      color: #ccd;
+      font-size: 13px;
+      width: 200px;
+      font-family: inherit;
+    }
+
+    .vehicle-row {
+      padding: 14px 20px;
+      border-top: 1px solid #12182a;
+    }
+
+    .vehicle-row:first-child {
+      border-top: none;
+    }
+
+    .count-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .v-plate {
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      font-size: 16px;
+    }
+
+    .badge {
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .badge-warn {
+      background: #ff2d2d;
+      color: #fff;
+      box-shadow: 0 0 8px #ff2d2d88;
+      animation: pulse 1.2s infinite;
+    }
+
+    .badge-caution {
+      background: #ff9500;
+      color: #fff;
+    }
+
+    .badge-ok {
+      background: #2ecc71;
+      color: #fff;
+    }
+
+    .empty-msg {
+      padding: 60px;
+      text-align: center;
+      color: #445;
+    }
+
+    /* Add form */
+    .add-wrap {
+      max-width: 520px;
+    }
+
+    .add-title {
+      font-weight: 800;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .add-sub {
+      font-size: 13px;
+      color: #556;
+      margin-bottom: 24px;
+    }
+
+    .form-card {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 14px;
+      padding: 28px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: #778;
+      font-weight: 600;
+      letter-spacing: .5px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: #080b14;
+      border: 1px solid #1e2a40;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #dde;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .form-select {
+      width: 100%;
+      background: #080b14;
+      border: 1px solid #1e2a40;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #dde;
+      font-size: 15px;
+      font-family: inherit;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23556' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    .plate-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .plate-input {
+      flex: 1;
+      min-width: 0;
+      background: #080b14;
+      border: 1px solid #1e2a40;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #dde;
+      font-size: 18px;
+      font-family: inherit;
+      letter-spacing: 3px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .plate-divider {
+      color: #334;
+      font-size: 20px;
+    }
+
+    .plate-preview {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #556;
+      text-align: center;
+    }
+
+    .plate-preview span {
+      color: #60b4ff;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #1565c0, #1976d2);
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 20px #1565c044;
+      transition: opacity .2s;
+    }
+
+    .submit-btn:hover {
+      opacity: .85;
+    }
+
+    .submit-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    #quick-warn {
+      margin-top: 20px;
+      background: #1a0808;
+      border: 1px solid #ff2d2d44;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: none;
+    }
+
+    .quick-warn-title {
+      font-size: 13px;
+      color: #ff6b6b;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .quick-warn-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    /* Log */
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .log-title {
+      font-weight: 800;
+      font-size: 22px;
+      margin-bottom: 2px;
+    }
+
+    .log-sub {
+      font-size: 13px;
+      color: #556;
+    }
+
+    .delete-all-btn {
+      background: #1a0808;
+      border: 1px solid #ff2d2d44;
+      border-radius: 8px;
+      color: #ff6b6b;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .xlsx-btn {
+      background: #0f1a30;
+      border: 1px solid #2a4070;
+      border-radius: 8px;
+      color: #60b4ff;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      transition: all .2s;
+    }
+
+    .xlsx-btn:hover {
+      background: #1a2a45;
+    }
+
+    .xlsx-btn-green {
+      background: #0a1f14;
+      border-color: #1a5030;
+      color: #4eca8b;
+    }
+
+    .xlsx-btn-green:hover {
+      background: #0f2a1c;
+    }
+
+    .log-row {
+      padding: 14px 20px;
+      border-top: 1px solid #12182a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .log-row:first-child {
+      border-top: none;
+    }
+
+    .log-plate {
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+    }
+
+    .log-date {
+      font-size: 13px;
+      color: #aab;
+    }
+
+    .log-note {
+      font-size: 12px;
+      color: #556;
+      margin-top: 2px;
+    }
+
+    .log-staff {
+      font-size: 12px;
+      color: #60b4ff;
+      margin-top: 2px;
+    }
+
+    .log-count {
+      font-size: 12px;
+      color: #445;
+    }
+
+    .log-warn-tag {
+      font-size: 11px;
+      color: #ff4444;
+      font-weight: 700;
+      margin-bottom: 2px;
+      animation: pulse 1s infinite;
+    }
+
+    .del-btn {
+      background: none;
+      border: 1px solid #1e2a40;
+      border-radius: 6px;
+      color: #556;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: opacity .2s;
+    }
+
+    .del-btn:hover {
+      opacity: .7;
+    }
+
+    /* 담당자 월별 실적 */
+    .month-nav-btn {
+      background: #0f1a30;
+      border: 1px solid #2a4070;
+      border-radius: 8px;
+      color: #60b4ff;
+      padding: 7px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 700;
+    }
+
+    .month-nav-btn:hover {
+      background: #1a2a45;
+    }
+
+    .month-label {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .staff-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .staff-stat-card {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .staff-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1565c0, #1976d2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .staff-name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .staff-count {
+      font-size: 24px;
+      font-weight: 900;
+      color: #60b4ff;
+    }
+
+    .staff-count-label {
+      font-size: 11px;
+      color: #556;
+    }
+
+    .staff-bar-wrap {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .staff-bar-row {
+      padding: 14px 20px;
+      border-top: 1px solid #12182a;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .staff-bar-row:first-child {
+      border-top: none;
+    }
+
+    .staff-bar-name {
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 80px;
+    }
+
+    .staff-bar-bg {
+      flex: 1;
+      background: #12182a;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .staff-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #1565c0, #60b4ff);
+      transition: width .5s;
+    }
+
+    .staff-bar-num {
+      font-size: 13px;
+      font-weight: 700;
+      color: #60b4ff;
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* 담당자 관리 탭 */
+    .staff-wrap {
+      max-width: 600px;
+    }
+
+    .staff-list-card {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .staff-row {
+      padding: 14px 20px;
+      border-top: 1px solid #12182a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .staff-row:first-child {
+      border-top: none;
+    }
+
+    .staff-row-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .staff-row-meta {
+      font-size: 12px;
+      color: #556;
+      margin-top: 2px;
+    }
+
+    .staff-del-btn {
+      background: none;
+      border: 1px solid #ff2d2d33;
+      border-radius: 6px;
+      color: #ff6b6b;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .staff-add-card {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .staff-add-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .staff-add-input {
+      flex: 1;
+      background: #080b14;
+      border: 1px solid #1e2a40;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #dde;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .staff-add-btn {
+      background: linear-gradient(90deg, #1565c0, #1976d2);
+      border: none;
+      border-radius: 8px;
+      padding: 11px 22px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .staff-add-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000000aa;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 14px;
+      padding: 28px 32px;
+      text-align: center;
+      animation: slideIn .2s ease;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .modal-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .modal-sub {
+      font-size: 13px;
+      color: #556;
+      margin-bottom: 20px;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .modal-cancel {
+      background: #1a2338;
+      border: 1px solid #2a3a50;
+      border-radius: 8px;
+      color: #aab;
+      padding: 9px 22px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+    }
+
+    .modal-confirm {
+      background: #ff2d2d;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 9px 22px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+    }
+
+    @media (max-width:640px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .tab-btn {
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+
+      #main {
+        padding: 16px;
+      }
+
+      .staff-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ── 관리자 버튼 ── */
+    #admin-btn {
+      background: #0f1a30;
+      border: 1px solid #2a4070;
+      border-radius: 8px;
+      color: #60b4ff;
+      padding: 6px 13px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: all .2s;
+    }
+    #admin-btn:hover { background: #1a2a45; }
+    #admin-btn.logged-in { background: #0a1f14; border-color: #2ecc7144; color: #4eca8b; }
+
+    /* ── 관리자 모달 공통 ── */
+    .admin-modal-overlay {
+      position: fixed; inset: 0; background: #000000bb;
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .admin-modal-overlay.show { display: flex; }
+    .admin-modal-box {
+      background: #0f1320; border: 1px solid #2a4070;
+      border-radius: 16px; padding: 32px; width: 100%;
+      max-width: 380px; animation: slideIn .2s ease; text-align: center;
+    }
+    .admin-modal-icon { font-size: 36px; margin-bottom: 10px; }
+    .admin-modal-title { font-weight: 900; font-size: 17px; margin-bottom: 6px; color: #fff; }
+    .admin-modal-sub { font-size: 13px; color: #556; margin-bottom: 20px; line-height: 1.6; }
+    .admin-pw-input {
+      width: 100%; background: #080b14; border: 1px solid #1e2a40;
+      border-radius: 8px; padding: 12px 14px; color: #dde;
+      font-size: 16px; font-family: inherit; text-align: center;
+      letter-spacing: 4px; margin-bottom: 8px;
+    }
+    .admin-pw-input:focus { outline: none; border-color: #2a5080; }
+    .admin-pw-input.error { border-color: #ff4444; box-shadow: 0 0 0 2px #ff444433; }
+    .admin-err-msg { font-size: 12px; color: #ff6b6b; margin-bottom: 12px; min-height: 18px; }
+    .admin-modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+    .admin-confirm-btn {
+      background: linear-gradient(90deg, #1565c0, #1976d2); border: none;
+      border-radius: 8px; color: #fff; padding: 10px 28px;
+      cursor: pointer; font-family: inherit; font-weight: 700; font-size: 14px;
+    }
+    .admin-confirm-btn:hover { opacity: .85; }
+    .admin-cancel-btn {
+      background: #1a2338; border: 1px solid #2a3a50; border-radius: 8px;
+      color: #aab; padding: 10px 20px; cursor: pointer;
+      font-family: inherit; font-weight: 600; font-size: 14px;
+    }
+    .admin-locked-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #1a1220; border: 1px solid #5a3a7a44;
+      border-radius: 6px; color: #9a6abf;
+      font-size: 11px; font-weight: 700; padding: 3px 9px;
+      margin-left: 8px; vertical-align: middle;
+    }
+    /* Responsive (Mobile) */
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .staff-stats-grid { grid-template-columns: 1fr; }
+      #header { flex-direction: column; align-items: flex-start; padding: 12px 20px; }
+      .tab-nav { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; }
+      .stat-value { font-size: 22px; }
+      .log-row, .vehicle-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .log-row > div:last-child { width: 100%; justify-content: space-between; border-top: 1px solid #1e2a40; padding-top: 10px; margin-top: 10px; }
+    }
+
+    /* ── 입차제한 탭 ── */
+    .restrict-row {
+      padding: 16px 20px;
+      border-top: 1px solid #12182a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .restrict-row:first-child { border-top: none; }
+    .restrict-plate { font-weight: 800; font-size: 17px; color: #ff6b6b; letter-spacing: 2px; }
+    .restrict-meta { font-size: 12px; color: #667; margin-top: 3px; }
+    .restrict-status-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .restrict-btn {
+      border-radius: 7px; padding: 7px 13px; cursor: pointer;
+      font-size: 12px; font-weight: 700; font-family: inherit;
+      transition: all .2s; opacity: 0.5;
+    }
+    .restrict-btn.active { opacity: 1; }
+    .restrict-btn-resident { background: #0a1f14; border: 1px solid #2ecc7144; color: #4eca8b; }
+    .restrict-btn-resident.active { background: #1a4028; border-color: #2ecc71; box-shadow: 0 0 8px #2ecc7133; }
+    .restrict-btn-block { background: #1a0808; border: 1px solid #ff444444; color: #ff6b6b; }
+    .restrict-btn-block.active { background: #3d0000; border-color: #ff4444; box-shadow: 0 0 8px #ff444433; }
+    .restrict-btn-visitor { background: #0f1a30; border: 1px solid #60b4ff44; color: #60b4ff; }
+    .restrict-btn-visitor.active { background: #1a2a45; border-color: #60b4ff; box-shadow: 0 0 8px #60b4ff33; }
+    .restrict-status-badge {
+      font-size: 11px; font-weight: 700; border-radius: 5px;
+      padding: 3px 9px; margin-top: 6px; display: inline-block;
+    }
+    .restrict-badge-none { background: #1a1e2e; color: #445; border: 1px solid #2a3040; }
+    .restrict-badge-resident { background: #0a1f14; color: #4eca8b; border: 1px solid #2ecc7144; }
+    .restrict-badge-block { background: #1a0808; color: #ff6b6b; border: 1px solid #ff444444; }
+    .restrict-badge-visitor { background: #0f1a30; color: #60b4ff; border: 1px solid #60b4ff44; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <div id="header">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div class="header-logo">🚗</div>
+      <div>
+        <div class="header-title">불법주차 관리 시스템</div>
+        <div class="header-sub">APARTMENT PARKING VIOLATION TRACKER</div>
+      </div>
+    </div>
+    <div class="tab-nav">
+      <span id="conn-status" class="conn-loading"><span class="spinner"></span>연결중</span>
+      <button class="tab-btn active" data-tab="add">➕ 기록</button>
+      <button class="tab-btn" data-tab="log">📋 전체기록</button>
+      <button class="tab-btn" data-tab="dashboard">📊 현황</button>
+      <button class="tab-btn" data-tab="staff">👤 담당자</button>
+      <button class="tab-btn" data-tab="restrict">🚫 입차제한</button>
+      <button id="admin-btn">🔒 관리자</button>
+    </div>
+  </div>
+
+  <!-- Alert Banner -->
+  <div id="alert-banner"></div>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="tab-dashboard" class="tab-panel">
+      <div class="stats-grid">
+        <div class="stat-card" style="border-left:3px solid #60b4ff">
+          <div class="stat-icon">🚗</div>
+          <div class="stat-value" id="stat-vehicles" style="color:#60b4ff">—</div>
+          <div class="stat-label">전체 차량</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #a78bfa">
+          <div class="stat-icon">📝</div>
+          <div class="stat-value" id="stat-total" style="color:#a78bfa">—</div>
+          <div class="stat-label">총 적발</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #34d399">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value" id="stat-today" style="color:#34d399">—</div>
+          <div class="stat-label">오늘 적발</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #ff4444">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" id="stat-warned" style="color:#ff4444">—</div>
+          <div class="stat-label">경고 차량</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <span>👤 담당자별 월별 적발 실적</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="month-nav-btn" id="month-prev">‹</button>
+            <div class="month-label" id="month-label"></div>
+            <button class="month-nav-btn" id="month-next">›</button>
+          </div>
+        </div>
+        <div id="staff-monthly-stats" style="padding:20px">
+          <div class="empty-msg" style="padding:30px">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+      <div id="warn-block">
+        <div class="warn-block-title"><span class="warn-icon">🚨</span> 경고 대상 차량 (3회 이상 적발)</div>
+        <div id="warn-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span>차량별 현황</span>
+          <input class="search-input" id="search-input" placeholder="🔍 차량번호 검색" />
+        </div>
+        <div id="vehicle-list">
+          <div class="empty-msg">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADD ══ -->
+    <div id="tab-add" class="tab-panel active">
+      <div class="add-wrap">
+        <div class="add-title">불법주차 기록</div>
+        <div class="add-sub">3회 이상 적발 시 자동으로 경고 알림이 표시됩니다.</div>
+        <div class="form-card">
+          <div class="form-group">
+            <label class="form-label">🚗 차량번호 *</label>
+            <div class="plate-wrap">
+              <input class="plate-input" id="plateA" placeholder="12가" maxlength="6" />
+              <span class="plate-divider">—</span>
+              <input class="plate-input" id="plateB" placeholder="3456" maxlength="4" />
+            </div>
+            <div class="plate-preview" id="plate-preview" style="display:none">미리보기: <span
+                id="plate-preview-text"></span></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📅 적발 날짜 *</label>
+            <input class="form-input" type="date" id="input-date" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">👤 담당자 *</label>
+            <select class="form-select" id="input-staff">
+              <option value="">— 담당자 선택 —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="phone-label">📞 연락처 <span id="phone-hint"
+                style="color:#556;font-weight:400;font-size:13px">3회 이상 적발 차량은 연락처를 기입해 주세요.</span></label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input class="form-input phone-input" id="phone1" placeholder="010" maxlength="3" inputmode="numeric"
+                pattern="[0-9]*" autocomplete="off" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
+              <span style="color:#334;font-size:18px;flex-shrink:0">—</span>
+              <input class="form-input phone-input" id="phone2" placeholder="0000" maxlength="4" inputmode="numeric"
+                pattern="[0-9]*" autocomplete="off" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
+              <span style="color:#334;font-size:18px;flex-shrink:0">—</span>
+              <input class="form-input phone-input" id="phone3" placeholder="0000" maxlength="4" inputmode="numeric"
+                pattern="[0-9]*" autocomplete="off" style="text-align:center;letter-spacing:2px;padding:11px 6px;" />
+            </div>
+          </div>
+          <button class="submit-btn" id="submit-btn">💾 저장</button>
+        </div>
+        <div id="quick-warn">
+          <div class="quick-warn-title">⚠ 현재 경고 대상 차량</div>
+          <div id="quick-warn-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ LOG ══ -->
+    <div id="tab-log" class="tab-panel">
+      <div class="log-header">
+        <div>
+          <div class="log-title">전체 적발 기록</div>
+          <div class="log-sub" id="log-count">총 0건의 기록</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="xlsx-btn" id="upload-btn">📂 엑셀 업로드</button>
+          <input type="file" id="upload-input" accept=".xlsx,.xls" style="display:none" />
+          <button class="xlsx-btn xlsx-btn-green" id="download-btn">⬇ 엑셀 다운로드</button>
+          <button class="delete-all-btn" id="delete-all-btn" style="display:none">🗑 전체 삭제</button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="log-list">
+          <div class="empty-msg">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STAFF ══ -->
+    <div id="tab-staff" class="tab-panel">
+      <div class="staff-wrap">
+        <div class="add-title">담당자 관리</div>
+        <div class="add-sub" style="margin-bottom:24px">담당자를 등록하면 기록 입력 시 선택할 수 있습니다.</div>
+        <div class="staff-list-card" id="staff-list-card">
+          <div class="empty-msg" style="padding:40px">등록된 담당자가 없습니다</div>
+        </div>
+        <div class="staff-add-card">
+          <div class="form-label" style="margin-bottom:12px">➕ 담당자 추가</div>
+          <div class="staff-add-row">
+            <input class="staff-add-input" id="staff-name-input" placeholder="담당자 이름 입력" maxlength="20" />
+            <button class="staff-add-btn" id="staff-add-btn">추가</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RESTRICT ══ -->
+    <div id="tab-restrict" class="tab-panel">
+      <div class="log-header">
+        <div>
+          <div class="log-title">입차제한 관리</div>
+          <div class="log-sub" id="restrict-count">경고 대상 차량 0건</div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="restrict-list">
+          <div class="empty-msg">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Upload Modal -->
+  <div id="upload-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon">📂</div>
+      <div class="modal-title">업로드 방식 선택</div>
+      <div class="modal-sub" id="upload-modal-sub"></div>
+      <div class="modal-btns" style="flex-direction:column;gap:8px">
+        <button id="upload-merge-btn"
+          style="background:#1a2338;border:1px solid #2a3a50;border-radius:8px;color:#60b4ff;padding:10px 22px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px">➕
+          기존 데이터에 추가</button>
+        <button id="upload-overwrite-btn"
+          style="background:#1a0808;border:1px solid #ff2d2d44;border-radius:8px;color:#ff6b6b;padding:10px 22px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px">🔄
+          기존 데이터 덮어쓰기</button>
+        <button id="upload-cancel-btn"
+          style="background:none;border:none;color:#556;cursor:pointer;font-family:inherit;padding:6px;font-size:13px">취소</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- ══ 관리자 로그인 모달 ══ -->
+  <div id="admin-login-modal" class="admin-modal-overlay">
+    <div class="admin-modal-box">
+      <div class="admin-modal-icon">🔑</div>
+      <div class="admin-modal-title">관리자 로그인</div>
+      <div class="admin-modal-sub">이메일과 비밀번호를 입력해 주세요.</div>
+      <input class="admin-pw-input" type="email" id="admin-login-email" placeholder="이메일 입력" style="letter-spacing:0; margin-bottom:10px" />
+      <input class="admin-pw-input" type="password" id="admin-login-pw" placeholder="비밀번호 입력" maxlength="50" />
+      <div class="admin-err-msg" id="admin-login-err"></div>
+      <div class="admin-modal-btns">
+        <button class="admin-cancel-btn" id="admin-login-cancel">취소</button>
+        <button class="admin-confirm-btn" id="admin-login-confirm">로그인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 관리자 인증 모달 (삭제·담당자추가 시) ══ -->
+  <div id="admin-auth-modal" class="admin-modal-overlay">
+    <div class="admin-modal-box">
+      <div class="admin-modal-icon" id="admin-auth-icon">🔐</div>
+      <div class="admin-modal-title" id="admin-auth-title">관리자 로그인 필요</div>
+      <div class="admin-modal-sub" id="admin-auth-sub">이 작업은 관리자만 수행할 수 있습니다.<br>로그인이 필요합니다.</div>
+      <div class="admin-modal-btns">
+        <button class="admin-cancel-btn" id="admin-auth-cancel">취소</button>
+        <button class="admin-confirm-btn" id="admin-auth-confirm" style="background:#60b4ff">로그인하러 가기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon" id="modal-icon">🗑</div>
+      <div class="modal-title" id="modal-title-text">이 기록을 삭제하시겠습니까?</div>
+      <div class="modal-sub" id="modal-sub-text">삭제 후 복구할 수 없습니다.</div>
+      <div class="modal-btns">
+        <button class="modal-cancel" id="modal-cancel">취소</button>
+        <button class="modal-confirm" id="modal-confirm">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════
+    //  CLOUDFLARE PAGES FUNCTIONS API CLIENT
+    // ══════════════════════════════════════════════
+    function getAuthToken() {
+      return localStorage.getItem('arlgpm_admin_token') || '';
+    }
+
+    function getAuthHeaders() {
+      const token = getAuthToken();
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+      };
+    }
+
+    async function apiFetch(path, opts = {}) {
+      const headers = { ...getAuthHeaders(), ...(opts.headers || {}) };
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'HTTP ' + res.status);
+      }
+      return data;
+    }
+
+    const db = {
+      getRecords: async () => {
+        return await apiFetch('/api/records');
+      },
+      insertRecord: async (r) => {
+        return await apiFetch('/api/records', { method: 'POST', body: JSON.stringify(r) });
+      },
+      insertRecords: async (rs) => {
+        return await apiFetch('/api/records', { method: 'POST', body: JSON.stringify(rs) });
+      },
+      deleteRecord: async (id) => {
+        return await apiFetch('/api/records/' + encodeURIComponent(id), { method: 'DELETE' });
+      },
+      deleteAllRecords: async () => {
+        return await apiFetch('/api/records', { method: 'DELETE' });
+      },
+      getStaff: async () => {
+        return await apiFetch('/api/managers');
+      },
+      insertStaff: async (s) => {
+        const row = await apiFetch('/api/managers', { method: 'POST', body: JSON.stringify(s) });
+        return [row];
+      },
+      deleteStaff: async (id) => {
+        return await apiFetch('/api/managers/' + encodeURIComponent(id), { method: 'DELETE' });
+      },
+      getRestrict: async () => {
+        try {
+          return await apiFetch('/api/restrict');
+        } catch { return []; }
+      },
+      upsertRestrict: async (plate, status) => {
+        return await apiFetch('/api/restrict', { method: 'POST', body: JSON.stringify({ plate, status }) });
+      }
+    };
+
+    // ══════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════
+    let records = [];
+    let staffList = [];
+    let restrictList = [];
+    let deleteTargetId = null;
+    let deleteMode = null;
+    let pendingImport = null;
+    let alertTimer = null;
+    let isConnected = false;
+    
+    function getLocalDate() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    
+    let currentMonth = getLocalDate().slice(0, 7);
+
+    // ── 관리자 상태 ──
+    let isAdminLoggedIn = false;       // 현재 세션 로그인 여부
+    let pendingAuthCallback = null;    // 인증 성공 후 실행할 콜백
+
+    // ── 관리자 버튼 상태 갱신 ──
+    function updateAdminBtn() {
+      const token = getAuthToken();
+      const email = localStorage.getItem('arlgpm_admin_email') || '관리자';
+      const btn = document.getElementById('admin-btn');
+      if (token) {
+        isAdminLoggedIn = true;
+        btn.textContent = '🟢 ' + email.split('@')[0] + ' (로그아웃)';
+        btn.classList.add('logged-in');
+      } else {
+        isAdminLoggedIn = false;
+        btn.textContent = '🔒 관리자 로그인';
+        btn.classList.remove('logged-in');
+      }
+    }
+
+    // ── 관리자 로그인 모달 ──
+    function openAdminLogin(callback) {
+      pendingAuthCallback = callback;
+      document.getElementById('admin-login-email').value = localStorage.getItem('arlgpm_admin_email') || '';
+      document.getElementById('admin-login-pw').value = '';
+      document.getElementById('admin-login-err').textContent = '';
+      document.getElementById('admin-login-modal').classList.add('show');
+      setTimeout(() => document.getElementById('admin-login-pw').focus(), 100);
+    }
+    document.getElementById('admin-login-cancel').addEventListener('click', () => {
+      document.getElementById('admin-login-modal').classList.remove('show');
+      pendingAuthCallback = null;
+    });
+    document.getElementById('admin-login-confirm').addEventListener('click', doAdminLogin);
+    document.getElementById('admin-login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
+    
+    async function doAdminLogin() {
+      const email = document.getElementById('admin-login-email').value.trim();
+      const password = document.getElementById('admin-login-pw').value;
+      const err = document.getElementById('admin-login-err');
+      const btn = document.getElementById('admin-login-confirm');
+      
+      if (!email || !password) { err.textContent = '이메일과 비밀번호를 입력해 주세요.'; return; }
+      
+      btn.disabled = true; btn.textContent = '인증 중...';
+      try {
+        const res = await apiFetch('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        
+        localStorage.setItem('arlgpm_admin_token', res.token);
+        localStorage.setItem('arlgpm_admin_email', res.email);
+        document.getElementById('admin-login-modal').classList.remove('show');
+        updateAdminBtn();
+        showAlert('ok', res.message ? '✅ ' + res.message : '✅ 관리자 로그인이 완료되었습니다.');
+        
+        if (pendingAuthCallback) {
+          const cb = pendingAuthCallback;
+          pendingAuthCallback = null;
+          cb();
+        }
+      } catch (e) {
+        err.textContent = '로그인 실패: ' + e.message;
+      } finally {
+        btn.disabled = false; btn.textContent = '로그인';
+      }
+    }
+
+    // ── 관리자 인증 모달 (작업 전 로그인 확인) ──
+    function requireAdmin(icon, title, sub, callback) {
+      if (isAdminLoggedIn) { callback(); return; }
+      pendingAuthCallback = callback;
+      document.getElementById('admin-auth-modal').classList.add('show');
+    }
+    document.getElementById('admin-auth-cancel').addEventListener('click', () => {
+      document.getElementById('admin-auth-modal').classList.remove('show');
+      pendingAuthCallback = null;
+    });
+    document.getElementById('admin-auth-confirm').addEventListener('click', () => {
+      document.getElementById('admin-auth-modal').classList.remove('show');
+      openAdminLogin(pendingAuthCallback);
+    });
+
+    // ── 관리자 버튼 클릭 ──
+    document.getElementById('admin-btn').addEventListener('click', async () => {
+      if (isAdminLoggedIn) {
+        localStorage.removeItem('arlgpm_admin_token');
+        updateAdminBtn();
+        showAlert('ok', '🔒 로그아웃 되었습니다.');
+      } else {
+        openAdminLogin();
+      }
+    });
+
+    // ══════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════
+    async function init() {
+      setStatus('loading');
+      try {
+        const [resRecords, resStaff, resRestrict] = await Promise.all([db.getRecords(), db.getStaff(), db.getRestrict()]);
+        records = resRecords || [];
+        staffList = resStaff || [];
+        restrictList = resRestrict || [];
+        isConnected = true;
+        setStatus('ok');
+        renderAll();
+      } catch (e) {
+        isConnected = false;
+        setStatus('err');
+        showAlert('error', '⚠ 연결 실패: ' + e.message);
+        const msg = '<div class="empty-msg">연결 오류 — ⚙ 설정을 확인하세요</div>';
+        document.getElementById('vehicle-list').innerHTML = msg;
+        document.getElementById('log-list').innerHTML = msg;
+      }
+    }
+
+    function setStatus(s) {
+      const el = document.getElementById('conn-status');
+      const m = { ok: ['conn-ok', '🟢 연결됨'], err: ['conn-err', '🔴 연결 오류'], loading: ['conn-loading', '<span class="spinner"></span>연결중'] };
+      el.className = m[s][0]; el.innerHTML = m[s][1];
+    }
+
+    // ══════════════════════════════════════════════
+    //  HELPERS
+    // ══════════════════════════════════════════════
+    function getSummary() {
+      const s = {};
+      records.forEach(r => {
+        if (!s[r.plate]) s[r.plate] = { plate: r.plate, count: 0, logs: [], lastDate: '' };
+        s[r.plate].count++; s[r.plate].logs.push(r); s[r.plate].lastDate = r.date;
+      });
+      return Object.values(s).sort((a, b) => b.count - a.count);
+    }
+
+    function showAlert(type, msg) {
+      const el = document.getElementById('alert-banner');
+      const c = {
+        warn: { bg: 'linear-gradient(90deg,#3d0000,#1a0000)', border: '#ff2d2d', color: '#ff6b6b' },
+        error: { bg: '#1a0f00', border: '#ff9500', color: '#ffbb44' },
+        ok: { bg: '#001a0f', border: '#2ecc71', color: '#4eff9f' },
+      }[type];
+      el.style.cssText = `display:flex;align-items:center;gap:8px;background:${c.bg};border-top:1px solid ${c.border};border-bottom:1px solid ${c.border};padding:12px 24px;font-size:14px;font-weight:600;color:${c.color};animation:slideIn .3s ease`;
+      el.textContent = msg;
+      if (alertTimer) clearTimeout(alertTimer);
+      alertTimer = setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    function badgeHTML(n) {
+      if (n >= 3) return '<span class="badge badge-warn">⚠ 경고</span>';
+      if (n === 2) return '<span class="badge badge-caution">주의</span>';
+      return '<span class="badge badge-ok">정상</span>';
+    }
+
+    function getStaffName(id) {
+      if (!id) return '';
+      const s = staffList.find(s => String(s.id) === String(id));
+      return s ? s.name : id; // ID와 일치하는 담당자가 없으면 입력된 값(이름)을 그대로 반환
+    }
+
+    function setFieldError(el, hasError) {
+      el.style.borderColor = hasError ? '#ff4444' : '';
+      el.style.boxShadow = hasError ? '0 0 0 2px #ff444433' : '';
+    }
+
+    function updateStaffSelect() {
+      const sel = document.getElementById('input-staff');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— 담당자 선택 —</option>';
+      staffList.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
+      sel.value = cur;
+    }
+
+    // ══════════════════════════════════════════════
+    //  RENDER DASHBOARD
+    // ══════════════════════════════════════════════
+    function renderDashboard() {
+      const vehicles = getSummary();
+      const warned = vehicles.filter(v => v.count >= 3);
+      const today = getLocalDate();
+
+      document.getElementById('stat-vehicles').textContent = vehicles.length;
+      document.getElementById('stat-total').textContent = records.length;
+      document.getElementById('stat-today').textContent = records.filter(r => r.date === today).length;
+      document.getElementById('stat-warned').textContent = warned.length;
+
+      const wb = document.getElementById('warn-block');
+      if (warned.length > 0) {
+        wb.style.display = 'block';
+        document.getElementById('warn-list').innerHTML = warned.map(v => {
+          const r = restrictList.find(x => x.plate === v.plate);
+          const status = r ? r.status : null;
+          const statusBadge = status ? `<span class="restrict-status-badge ${
+            status === '임주민 등록' ? 'restrict-badge-resident' :
+            status === '입차제한' ? 'restrict-badge-block' :
+            'restrict-badge-visitor'
+          }" style="margin-top:0; margin-left:8px; vertical-align:middle;">${
+            status === '임주민 등록' ? '🏠 ' : status === '입차제한' ? '🚫 ' : '🪪 '
+          }${status}</span>` : '<span class="restrict-status-badge restrict-badge-none" style="margin-top:0; margin-left:8px; vertical-align:middle;">⏳ 미처리</span>';
+
+          const notes = v.logs.filter(l => l.note).map(l =>
+            `<div style="display:flex;gap:8px;align-items:flex-start;margin-top:5px;font-size:12px;color:#cc8866">
+          <span style="opacity:.6;white-space:nowrap">${l.date}</span><span>📞 ${l.note}</span>
+        </div>`).join('');
+          return `<div class="warn-vehicle-row" style="flex-direction:column;align-items:stretch;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+              <div class="warn-plate">${v.plate}</div>
+              ${statusBadge}
+            </div>
+            <div class="warn-meta">총 ${v.count}회 적발 · 마지막: ${v.lastDate}</div>
+          </div>
+          <div class="warn-badge">⚠ 경고 ${v.count}회</div>
+        </div>
+        ${notes ? `<div style="border-top:1px solid #ff2d2d22;padding-top:8px">${notes}</div>` : ''}
+      </div>`;
+        }).join('');
+      } else { wb.style.display = 'none'; }
+
+      const search = document.getElementById('search-input').value.toUpperCase();
+      const filtered = vehicles.filter(v => v.plate.toUpperCase().includes(search));
+      const listEl = document.getElementById('vehicle-list');
+      if (filtered.length === 0) { listEl.innerHTML = '<div class="empty-msg">기록된 차량이 없습니다</div>'; }
+      else {
+        listEl.innerHTML = filtered.map(v => {
+          const cc = v.count >= 3 ? '#ff4444' : v.count === 2 ? '#ff9500' : '#2ecc71';
+          const cb = v.count >= 3 ? '#2d0000' : v.count === 2 ? '#2d1500' : '#0a1f10';
+          const cbr = v.count >= 3 ? '#ff444444' : v.count === 2 ? '#ff950044' : '#2ecc7144';
+          const dc = v.count >= 3 ? '#3d0000' : v.count === 2 ? '#2d1800' : '#0a1a14';
+          const dbr = v.count >= 3 ? '#ff444433' : v.count === 2 ? '#ff950033' : '#2ecc7133';
+          const dt = v.count >= 3 ? '#ff6b6b' : v.count === 2 ? '#ffaa44' : '#4eca8b';
+          const tags = [...v.logs].sort((a, b) => a.date.localeCompare(b.date)).map((l, i) =>
+            `<span style="display:inline-flex;align-items:center;gap:4px;background:${dc};border:1px solid ${dbr};border-radius:5px;padding:2px 8px;font-size:11px;color:${dt};white-space:nowrap"><span style="opacity:.6">${i + 1}차</span>${l.date}</span>`
+          ).join('');
+          return `<div class="vehicle-row"><div style="display:flex;align-items:flex-start;gap:14px">
+        <div class="count-badge" style="background:${cb};border:1px solid ${cbr};color:${cc};margin-top:2px">${v.count}</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+            <div class="v-plate">${v.plate}</div>${badgeHTML(v.count)}
+            <span style="font-size:12px;color:#445">총 ${v.count}회</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${tags}</div>
+        </div>
+      </div></div>`;
+        }).join('');
+      }
+      renderStaffMonthly();
+    }
+
+    // ══════════════════════════════════════════════
+    //  담당자 월별 실적
+    // ══════════════════════════════════════════════
+    function renderStaffMonthly() {
+      const [y, m] = currentMonth.split('-');
+      document.getElementById('month-label').textContent = `${y}년 ${parseInt(m)}월`;
+      const monthRecords = records.filter(r => r.date && r.date.startsWith(currentMonth));
+      const el = document.getElementById('staff-monthly-stats');
+      if (staffList.length === 0) { el.innerHTML = '<div class="empty-msg" style="padding:30px">담당자 탭에서 담당자를 먼저 등록하세요</div>'; return; }
+      const counts = {}; staffList.forEach(s => { counts[s.id] = 0; }); counts['__none__'] = 0;
+      monthRecords.forEach(r => {
+        // ID 또는 이름으로 담당자를 찾음
+        const sObj = staffList.find(s => String(s.id) === String(r.staff) || s.name === r.staff);
+        const k = sObj ? sObj.id : (r.staff || '__none__');
+        if (counts[k] === undefined) counts[k] = 0; 
+        counts[k]++;
+      });
+      const total = monthRecords.length;
+      // 전체 담당자(목록 + 임시(이름)) 중 가장 높은 수치를 찾아 그래프 비율 계산
+      const allKeys = Object.keys(counts);
+      const maxCount = Math.max(...allKeys.map(k => counts[k]), 1);
+      const cards = staffList.map(s => {
+        const n = counts[s.id] || 0; const pct = total > 0 ? Math.round(n / total * 100) : 0;
+        return `<div class="staff-stat-card"><div class="staff-avatar">👤</div><div>
+      <div class="staff-name">${s.name}</div>
+      <div class="staff-count">${n}<span style="font-size:13px;color:#556;font-weight:400">건</span></div>
+      <div class="staff-count-label">전체의 ${pct}%</div>
+    </div></div>`;
+      }).join('');
+      const bars = staffList.map(s => {
+        const n = counts[s.id] || 0; const pct = Math.round(n / maxCount * 100);
+        return `<div class="staff-bar-row"><div class="staff-bar-name">${s.name}</div>
+      <div class="staff-bar-bg"><div class="staff-bar-fill" style="width:${pct}%"></div></div>
+      <div class="staff-bar-num">${n}</div></div>`;
+      }).join('');
+      const nc = counts['__none__'] || 0;
+      const noneBar = nc > 0 ? `<div class="staff-bar-row" style="opacity:.5">
+    <div class="staff-bar-name" style="color:#445">미지정</div>
+    <div class="staff-bar-bg"><div class="staff-bar-fill" style="width:${Math.round(nc / maxCount * 100)}%;background:#334"></div></div>
+    <div class="staff-bar-num" style="color:#445">${nc}</div></div>` : '';
+      el.innerHTML = `<div class="staff-stats-grid">${cards}</div><div class="staff-bar-wrap">${bars}${noneBar}</div>
+    <div style="margin-top:10px;font-size:12px;color:#445;text-align:right">이 달 총 ${total}건 적발</div>`;
+    }
+
+    function changeMonth(d) {
+      const [y, m] = currentMonth.split('-').map(Number);
+      const dt = new Date(y, m - 1 + d, 1);
+      currentMonth = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+      renderStaffMonthly();
+    }
+    document.getElementById('month-prev').addEventListener('click', () => changeMonth(-1));
+    document.getElementById('month-next').addEventListener('click', () => changeMonth(1));
+
+    // ══════════════════════════════════════════════
+    //  RENDER ADD TAB
+    // ══════════════════════════════════════════════
+    function renderAddTab() {
+      const warned = getSummary().filter(v => v.count >= 3);
+      const qw = document.getElementById('quick-warn');
+      if (warned.length > 0) {
+        qw.style.display = 'block';
+        document.getElementById('quick-warn-list').innerHTML = warned.map(v =>
+          `<div class="quick-warn-row"><span style="letter-spacing:1px;font-weight:700">${v.plate}</span><span style="color:#ff4444">${v.count}회 적발</span></div>`
+        ).join('');
+      } else { qw.style.display = 'none'; }
+      updateStaffSelect();
+    }
+
+    // ══════════════════════════════════════════════
+    //  RENDER LOG
+    // ══════════════════════════════════════════════
+    function renderLog() {
+      const summary = {};
+      records.forEach(r => { summary[r.plate] = (summary[r.plate] || 0) + 1; });
+      document.getElementById('log-count').textContent = `총 ${records.length}건의 기록`;
+      document.getElementById('delete-all-btn').style.display = records.length > 0 ? 'block' : 'none';
+      const listEl = document.getElementById('log-list');
+      if (records.length === 0) { listEl.innerHTML = '<div class="empty-msg">적발 기록이 없습니다</div>'; return; }
+      listEl.innerHTML = (records || []).map(r => {
+        const vc = summary[r.plate] || 0;
+        const pb = vc >= 3 ? '#2d0000' : '#0f1320'; const pbr = vc >= 3 ? '#ff444466' : '#1e2a40'; const pc = vc >= 3 ? '#ff6b6b' : '#60b4ff';
+        const sn = getStaffName(r.staff);
+        return `<div class="log-row">
+      <div style="display:flex;gap:14px;align-items:center">
+        <div class="log-plate" style="background:${pb};border:1px solid ${pbr};color:${pc}">${r.plate}</div>
+        <div>
+          <div class="log-date">📅 ${r.date}</div>
+          ${sn ? `<div class="log-staff">👤 ${sn}</div>` : ''}
+          ${r.note ? `<div class="log-note">📞 ${r.note}</div>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="text-align:right">
+          ${vc >= 3 ? '<div class="log-warn-tag">⚠ 경고</div>' : ''}
+          <div class="log-count">총 ${vc}회 적발</div>
+        </div>
+        <button class="del-btn" data-id="${r.id}">✕</button>
+      </div>
+    </div>`;
+      }).join('');
+      listEl.querySelectorAll('.del-btn').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.id)));
+    }
+
+    // ══════════════════════════════════════════════
+    //  RENDER STAFF TAB
+    // ══════════════════════════════════════════════
+    function renderStaffTab() {
+      const card = document.getElementById('staff-list-card');
+      if (staffList.length === 0) { card.innerHTML = '<div class="empty-msg" style="padding:40px">등록된 담당자가 없습니다</div>'; return; }
+      card.innerHTML = staffList.map(s => {
+        const cnt = records.filter(r => r.staff === s.id).length;
+        return `<div class="staff-row">
+      <div><div class="staff-row-name">👤 ${s.name}</div><div class="staff-row-meta">총 적발 기록 ${cnt}건</div></div>
+      <button class="staff-del-btn" data-sid="${s.id}">삭제</button>
+    </div>`;
+      }).join('');
+      card.querySelectorAll('.staff-del-btn').forEach(btn => btn.addEventListener('click', () => {
+        const s = staffList.find(x => x.id === btn.dataset.sid); if (!s) return;
+        openModal(btn.dataset.sid, 'staff');
+      }));
+    }
+
+    function renderAll() { renderDashboard(); renderAddTab(); renderLog(); renderStaffTab(); renderRestrictTab(); }
+
+    // ══════════════════════════════════════════════
+    //  RENDER RESTRICT TAB
+    // ══════════════════════════════════════════════
+    function renderRestrictTab() {
+      const warned = getSummary().filter(v => v.count >= 3);
+      document.getElementById('restrict-count').textContent = `경고 대상 차량 ${warned.length}건`;
+      const listEl = document.getElementById('restrict-list');
+      if (warned.length === 0) {
+        listEl.innerHTML = '<div class="empty-msg">경고 대상 차량이 없습니다</div>';
+        return;
+      }
+      listEl.innerHTML = warned.map(v => {
+        const r = restrictList.find(x => x.plate === v.plate);
+        const status = r ? r.status : null;
+        const statusBadgeClass = status === '임주민 등록' ? 'restrict-badge-resident'
+          : status === '입차제한' ? 'restrict-badge-block'
+          : status === '방문자등록 이용' ? 'restrict-badge-visitor'
+          : 'restrict-badge-none';
+        const statusBadgeIcon = status === '임주민 등록' ? '🏠 임주민 등록'
+          : status === '입차제한' ? '🚫 입차제한'
+          : status === '방문자등록 이용' ? '🪪 방문자등록 이용'
+          : '⏳ 미처리';
+        return `<div class="restrict-row">
+          <div>
+            <div class="restrict-plate">${v.plate}</div>
+            <div class="restrict-meta">총 ${v.count}회 적발 · 마지막: ${v.lastDate}</div>
+            <div><span class="restrict-status-badge ${statusBadgeClass}">${statusBadgeIcon}</span></div>
+            <div class="restrict-status-btns">
+              <button class="restrict-btn restrict-btn-resident${status === '임주민 등록' ? ' active' : ''}" data-plate="${v.plate}" data-status="임주민 등록">🏠 임주민 등록</button>
+              <button class="restrict-btn restrict-btn-block${status === '입차제한' ? ' active' : ''}" data-plate="${v.plate}" data-status="입차제한">🚫 입차제한</button>
+              <button class="restrict-btn restrict-btn-visitor${status === '방문자등록 이용' ? ' active' : ''}" data-plate="${v.plate}" data-status="방문자등록 이용">🪪 방문자등록 이용</button>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#445;text-align:right">⚠ 경고 ${v.count}회</div>
+        </div>`;
+      }).join('');
+      listEl.querySelectorAll('.restrict-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const plate = btn.dataset.plate;
+          const status = btn.dataset.status;
+          btn.disabled = true;
+          try {
+            await db.upsertRestrict(plate, status);
+            const idx = restrictList.findIndex(x => x.plate === plate);
+            if (idx >= 0) restrictList[idx].status = status;
+            else restrictList.push({ plate, status });
+            showAlert('ok', `✅ ${plate} — ${status} 처리 완료`);
+            renderRestrictTab();
+          } catch (e) {
+            showAlert('error', '처리 실패: ' + e.message);
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    // ══════════════════════════════════════════════
+    //  TABS
+    // ══════════════════════════════════════════════
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      renderAll();
+    }));
+    document.getElementById('search-input').addEventListener('input', renderDashboard);
+
+    // ══════════════════════════════════════════════
+    //  PLATE INPUT
+    // ══════════════════════════════════════════════
+    const plateA = document.getElementById('plateA');
+    const plateB = document.getElementById('plateB');
+    plateA.addEventListener('input', () => { updatePlatePreview(); if (plateA.value.length >= 6) plateB.focus(); setFieldError(plateA, false); });
+    plateB.addEventListener('input', () => { updatePlatePreview(); setFieldError(plateB, false); });
+    plateB.addEventListener('keydown', e => { if (e.key === 'Backspace' && plateB.value === '') plateA.focus(); });
+    document.getElementById('input-date').addEventListener('change', () => setFieldError(document.getElementById('input-date'), false));
+    document.getElementById('input-staff').addEventListener('change', () => setFieldError(document.getElementById('input-staff'), false));
+
+    function updatePlatePreview() {
+      const v = (plateA.value + plateB.value).toUpperCase();
+      document.getElementById('plate-preview-text').textContent = v;
+      document.getElementById('plate-preview').style.display = v ? 'block' : 'none';
+      updatePhoneRequired(v);
+    }
+
+    function updatePhoneRequired(plate) {
+      const count = records.filter(r => r.plate === plate).length;
+      const isRequired = count >= 2; // 2회 적발 = 이번이 3번째
+      const label = document.getElementById('phone-label');
+      const hint = document.getElementById('phone-hint');
+      if (isRequired) {
+        hint.textContent = '⚠ 3회 적발 차량입니다. 연락처 입력이 필수입니다.';
+        hint.style.color = '#ff9500';
+        hint.style.fontWeight = '700';
+        label.dataset.required = 'true';
+      } else {
+        hint.textContent = '3회 이상 적발 차량은 연락처를 기입해 주세요.';
+        hint.style.color = '#556';
+        hint.style.fontWeight = '400';
+        label.dataset.required = 'false';
+      }
+    }
+    document.getElementById('input-date').value = getLocalDate();
+    document.getElementById('input-date').max = getLocalDate();
+
+    // ══════════════════════════════════════════════
+    //  ADD RECORD
+    // ══════════════════════════════════════════════
+    // ══════════════════════════════════════════════
+    //  PHONE INPUT 자동 이동
+    // ══════════════════════════════════════════════
+    document.getElementById('phone1').addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      if (this.value.length >= 3) document.getElementById('phone2').focus();
+      ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), false));
+    });
+    document.getElementById('phone2').addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      if (this.value.length >= 4) document.getElementById('phone3').focus();
+      ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), false));
+    });
+    document.getElementById('phone3').addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), false));
+    });
+    document.getElementById('phone2').addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && this.value === '') document.getElementById('phone1').focus();
+    });
+    document.getElementById('phone3').addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && this.value === '') document.getElementById('phone2').focus();
+    });
+
+    document.getElementById('submit-btn').addEventListener('click', addRecord);
+    document.getElementById('phone3').addEventListener('keydown', e => { if (e.key === 'Enter') addRecord(); });
+
+    async function addRecord() {
+      if (!isConnected) { showAlert('error', '서버에 연결되어 있지 않습니다.'); return; }
+      const pA = plateA.value.trim(), pB = plateB.value.trim();
+      const date = document.getElementById('input-date').value;
+      const staff = document.getElementById('input-staff').value;
+
+      let hasError = false; const missing = [];
+      [plateA, plateB, document.getElementById('input-date'), document.getElementById('input-staff')].forEach(el => setFieldError(el, false));
+      if (!pA || !pB) { setFieldError(plateA, !pA); setFieldError(plateB, !pB); missing.push('차량번호'); hasError = true; }
+      if (!date) { setFieldError(document.getElementById('input-date'), true); missing.push('적발 날짜'); hasError = true; }
+      if (!staff) { setFieldError(document.getElementById('input-staff'), true); missing.push('담당자'); hasError = true; }
+
+      const plate = (pA + pB).toUpperCase();
+      const p1 = document.getElementById('phone1').value.trim();
+      const p2 = document.getElementById('phone2').value.trim();
+      const p3 = document.getElementById('phone3').value.trim();
+      const note = [p1, p2, p3].filter(Boolean).join('-');
+
+      // 연락처 필수 검증 (2회 이상 적발 차량)
+      const summary0 = {}; records.forEach(r => { summary0[r.plate] = (summary0[r.plate] || 0) + 1; });
+      const prevCount = summary0[plate] || 0;
+      if (prevCount >= 2 && (!p1 || !p2 || !p3)) {
+        ['phone1', 'phone2', 'phone3'].forEach(id => setFieldError(document.getElementById(id), true));
+        missing.push('연락처');
+        hasError = true;
+      }
+
+      if (hasError) { showAlert('error', `⚠ 필수 항목을 입력하세요: ${missing.join(', ')}`); return; }
+      const id = Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+
+      const btn = document.getElementById('submit-btn');
+
+      // ── 저장 중 상태
+      btn.disabled = true;
+      btn.textContent = '⏳ 저장 중...';
+      btn.style.cssText = 'background:linear-gradient(135deg,#1a3050,#0f2040);border-color:#2a5080;color:#60b4ff;cursor:not-allowed;';
+
+      try {
+        await db.insertRecord({ id, plate, date, staff, note });
+        records.push({ id, plate, date, staff, note });
+        const summary = {}; records.forEach(r => { summary[r.plate] = (summary[r.plate] || 0) + 1; });
+        const n = summary[plate];
+
+        // ── 저장 완료 상태 (버튼 일시 변경)
+        btn.textContent = '✅ 저장 완료!';
+        btn.style.cssText = 'background:linear-gradient(135deg,#003820,#001f10);border-color:#2ecc71;color:#4eff9f;cursor:not-allowed;transition:all .3s;';
+
+        showAlert(n >= 3 ? 'warn' : 'ok', n >= 3 ? `🚨 ${plate} — ${n}회 적발! 경고 대상 차량입니다.` : `✅ ${plate} 저장 완료! (총 ${n}회 적발)`);
+
+        plateA.value = ''; plateB.value = '';
+        document.getElementById('input-date').value = getLocalDate();
+        document.getElementById('input-staff').value = '';
+        document.getElementById('phone1').value = '';
+        document.getElementById('phone2').value = '';
+        document.getElementById('phone3').value = '';
+        document.getElementById('plate-preview').style.display = 'none';
+        [plateA, plateB, document.getElementById('input-date'), document.getElementById('input-staff')].forEach(el => setFieldError(el, false));
+        renderAll();
+
+        // 1.5초 후 버튼 원상 복구
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = '💾 저장';
+          btn.style.cssText = '';
+        }, 1500);
+
+      } catch (e) {
+        showAlert('error', '저장 실패: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = '💾 저장';
+        btn.style.cssText = '';
+      }
+    }
+
+    // ══════════════════════════════════════════════
+    //  STAFF ADD
+    // ══════════════════════════════════════════════
+    document.getElementById('staff-add-btn').addEventListener('click', () => {
+      requireAdmin('👤', '관리자 인증 필요', '담당자 추가는 관리자만 수행할 수 있습니다.\n관리자 비밀번호를 입력해 주세요.', addStaff);
+    });
+    document.getElementById('staff-name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') requireAdmin('👤', '관리자 인증 필요', '담당자 추가는 관리자만 수행할 수 있습니다.\n관리자 비밀번호를 입력해 주세요.', addStaff);
+    });
+
+    async function addStaff() {
+      if (!isConnected) { showAlert('error', '서버에 연결되어 있지 않습니다.'); return; }
+      const name = document.getElementById('staff-name-input').value.trim();
+      if (!name) { showAlert('error', '담당자 이름을 입력하세요.'); return; }
+      if (staffList.find(s => s.name === name)) { showAlert('error', '이미 등록된 이름입니다.'); return; }
+      const btn = document.getElementById('staff-add-btn');
+      btn.disabled = true; btn.textContent = '저장 중...';
+      try {
+        const rows = await db.insertStaff({ name });
+        if (rows && rows.length > 0) {
+          staffList.push(rows[0]);
+          document.getElementById('staff-name-input').value = '';
+          showAlert('ok', `✅ "${name}" 담당자가 등록되었습니다.`);
+          renderAll();
+        }
+      } catch (e) { showAlert('error', '저장 실패: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = '추가'; }
+    }
+
+    // ══════════════════════════════════════════════
+    //  DELETE MODAL
+    // ══════════════════════════════════════════════
+    function openModal(id, mode) {
+      const doOpen = () => _openModal(id, mode);
+      if (mode === 'staff') {
+        requireAdmin('👤', '관리자 인증 필요', '담당자 삭제는 관리자만 수행할 수 있습니다.\n관리자 비밀번호를 입력해 주세요.', doOpen);
+      } else {
+        const label = id === 'all' ? '전체 기록 삭제' : '기록 삭제';
+        requireAdmin('🗑', '관리자 인증 필요', `${label}는 관리자만 수행할 수 있습니다.\n관리자 비밀번호를 입력해 주세요.`, doOpen);
+      }
+    }
+
+    function _openModal(id, mode) {
+      if (mode === 'staff') {
+        deleteMode = 'staff'; deleteTargetId = id;
+        const s = staffList.find(x => x.id === id);
+        document.getElementById('modal-icon').textContent = '👤';
+        document.getElementById('modal-title-text').textContent = `"${s ? s.name : ''}" 담당자를 삭제하시겠습니까?`;
+        document.getElementById('modal-sub-text').textContent = '기존 적발 기록의 담당자 정보는 유지됩니다.';
+      } else {
+        deleteMode = id === 'all' ? 'all' : 'single'; if (id !== 'all') deleteTargetId = id;
+        document.getElementById('modal-icon').textContent = '🗑';
+        document.getElementById('modal-title-text').textContent = id === 'all' ? '모든 기록을 삭제하시겠습니까?' : '이 기록을 삭제하시겠습니까?';
+        document.getElementById('modal-sub-text').textContent = id === 'all' ? `전체 ${records.length}건이 삭제됩니다. 복구할 수 없습니다.` : '삭제 후 복구할 수 없습니다.';
+      }
+      document.getElementById('modal').classList.add('show');
+    }
+
+    document.getElementById('modal-cancel').addEventListener('click', () => {
+      document.getElementById('modal').classList.remove('show'); deleteTargetId = null; deleteMode = null;
+    });
+
+    document.getElementById('modal-confirm').addEventListener('click', async () => {
+      document.getElementById('modal').classList.remove('show');
+      const btn = document.getElementById('modal-confirm'); btn.textContent = '처리 중...';
+      try {
+        if (deleteMode === 'all') { await db.deleteAllRecords(); records = []; }
+        else if (deleteMode === 'single' && deleteTargetId) { await db.deleteRecord(deleteTargetId); records = records.filter(r => String(r.id) !== String(deleteTargetId)); }
+        else if (deleteMode === 'staff' && deleteTargetId) { await db.deleteStaff(deleteTargetId); staffList = staffList.filter(s => s.id !== deleteTargetId); }
+        renderAll();
+      } catch (e) { showAlert('error', '삭제 실패: ' + e.message); }
+      finally { btn.textContent = '확인'; deleteTargetId = null; deleteMode = null; }
+    });
+
+    document.getElementById('delete-all-btn').addEventListener('click', () => openModal('all'));
+
+    // ══════════════════════════════════════════════
+    //  UPLOAD MODAL
+    // ══════════════════════════════════════════════
+    document.getElementById('upload-merge-btn').addEventListener('click', async () => {
+      document.getElementById('upload-modal').classList.remove('show');
+      if (!pendingImport) return;
+      try { 
+        const data = await db.insertRecords(pendingImport); 
+        records = [...records, ...(data || [])]; 
+        renderAll(); 
+        showAlert('ok', `✅ ${pendingImport.length}건 추가 업로드 완료`); 
+      }
+      catch (e) { showAlert('error', '업로드 실패: ' + e.message); }
+      pendingImport = null;
+    });
+    document.getElementById('upload-overwrite-btn').addEventListener('click', async () => {
+      document.getElementById('upload-modal').classList.remove('show');
+      if (!pendingImport) return;
+      try { 
+        await db.deleteAllRecords(); 
+        const data = await db.insertRecords(pendingImport); 
+        records = data || []; 
+        renderAll(); 
+        showAlert('ok', `✅ ${pendingImport.length}건으로 데이터 교체 완료`); 
+      }
+      catch (e) { showAlert('error', '업로드 실패: ' + e.message); }
+      pendingImport = null;
+    });
+    document.getElementById('upload-cancel-btn').addEventListener('click', () => {
+      document.getElementById('upload-modal').classList.remove('show'); pendingImport = null;
+    });
+
+    // ══════════════════════════════════════════════
+    //  EXCEL DOWNLOAD
+    // ══════════════════════════════════════════════
+    // ══════════════════════════════════════════════
+    //  EXCEL UPLOAD BUTTON (관리자 인증)
+    // ══════════════════════════════════════════════
+    document.getElementById('upload-btn').addEventListener('click', () => {
+      requireAdmin('📂', '관리자 인증 필요', '엑셀 업로드는 관리자만 수행할 수 있습니다.\n관리자 비밀번호를 입력해 주세요.', () => {
+        document.getElementById('upload-input').click();
+      });
+    });
+
+    // ══════════════════════════════════════════════
+    //  EXCEL DOWNLOAD (관리자 인증)
+    // ══════════════════════════════════════════════
+    document.getElementById('download-btn').addEventListener('click', () => {
+      requireAdmin('⬇', '관리자 인증 필요', '엑셀 다운로드는 관리자만 수행할 수 있습니다.\n관리자 비밀번호를 입력해 주세요.', () => {
+        if (records.length === 0) { showAlert('error', '다운로드할 기록이 없습니다.'); return; }
+        const summary = {}; records.forEach(r => { summary[r.plate] = (summary[r.plate] || 0) + 1; });
+        const data = records.map(r => ({ '차량번호': r.plate, '적발날짜': r.date, '담당자': getStaffName(r.staff) || '', '총적발횟수': summary[r.plate], '경고여부': summary[r.plate] >= 3 ? '⚠ 경고' : summary[r.plate] === 2 ? '주의' : '정상', '연락처': r.note || '' }));
+        const wb2 = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(data);
+        ws['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 24 }];
+        XLSX.utils.book_append_sheet(wb2, ws, '불법주차기록');
+        XLSX.writeFile(wb2, `불법주차기록_${getLocalDate()}.xlsx`);
+        showAlert('ok', `✅ 엑셀 다운로드 완료 (${records.length}건)`);
+      });
+    });
+
+    // ══════════════════════════════════════════════
+    //  EXCEL UPLOAD
+    // ══════════════════════════════════════════════
+    document.getElementById('upload-input').addEventListener('change', function (e) {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        try {
+          const wb2 = XLSX.read(evt.target.result, { type: 'binary' }); const ws = wb2.Sheets[wb2.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws); if (rows.length === 0) { showAlert('error', '업로드할 데이터가 없습니다.'); return; }
+          const imported = []; let skipped = 0;
+          rows.forEach(row => {
+            const plate = (row['차량번호'] || '').toString().trim().toUpperCase();
+            const date = (row['적발날짜'] || '').toString().trim();
+            const note = (row['연락처'] || row['비고'] || '').toString().trim();
+            if (!plate || !date) { skipped++; return; }
+            let dateStr = date;
+            if (/^\d{4,5}$/.test(date)) { const d = new Date(new Date(1899, 11, 30).getTime() + Number(date) * 86400000); dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+            const sName = (row['담당자'] || '').toString().trim();
+            // 담당자 이름이 있으면 목록에서 ID를 찾고, 없으면 그냥 이름을 넣음 (DB에서 TEXT이므로 허용됨)
+            const sObj = sName ? staffList.find(s => s.name === sName) : null;
+            imported.push({ plate, date: dateStr, staff: sObj ? sObj.id : sName, note });
+          });
+          if (imported.length === 0) { showAlert('error', '유효한 행이 없습니다.'); return; }
+          pendingImport = imported;
+          document.getElementById('upload-modal-sub').textContent = `${imported.length}건을 불러옵니다. 처리 방식을 선택하세요.` + (skipped ? ` (${skipped}건 건너뜀)` : '');
+          document.getElementById('upload-modal').classList.add('show');
+          e.target.value = '';
+        } catch { showAlert('error', '파일을 읽는 중 오류가 발생했습니다.'); e.target.value = ''; }
+      };
+      reader.readAsBinaryString(file);
+    });
+
+    // ══════════════════════════════════════════════
+    //  START
+    // ══════════════════════════════════════════════
+    updateAdminBtn();
+    init();
+  </script>
+</body>
+
+</html>
