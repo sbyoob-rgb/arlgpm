@@ -1066,8 +1066,8 @@
     /* ── 입차제한 탭 (오리지널 리치 UI) ── */
     .restrict-stats-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
       margin-bottom: 20px;
     }
     .restrict-filter-bar {
@@ -1399,10 +1399,20 @@
           <div class="stat-value" id="restrict-stat-total" style="color:#ff4444">0</div>
           <div class="stat-label">전체 경고 차량</div>
         </div>
-        <div class="stat-card" style="border-left:3px solid #2ecc71">
-          <div class="stat-icon" style="color:#2ecc71">✅</div>
-          <div class="stat-value" id="restrict-stat-done" style="color:#2ecc71">0</div>
-          <div class="stat-label">처리 완료</div>
+        <div class="stat-card" style="border-left:3px solid #4eca8b">
+          <div class="stat-icon" style="color:#4eca8b">🏠</div>
+          <div class="stat-value" id="restrict-stat-resident" style="color:#4eca8b">0</div>
+          <div class="stat-label">입주민 등록</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #60b4ff">
+          <div class="stat-icon" style="color:#60b4ff">🪪</div>
+          <div class="stat-value" id="restrict-stat-visitor" style="color:#60b4ff">0</div>
+          <div class="stat-label">방문자 등록</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #ff6b6b">
+          <div class="stat-icon" style="color:#ff6b6b">🚫</div>
+          <div class="stat-value" id="restrict-stat-block" style="color:#ff6b6b">0</div>
+          <div class="stat-label">입차제한</div>
         </div>
         <div class="stat-card" style="border-left:3px solid #f59e0b">
           <div class="stat-icon" style="color:#f59e0b">⌛</div>
@@ -2007,19 +2017,28 @@
       const warned = getSummary().filter(v => v.count >= 3);
       
       // 통계 계산
-      let doneCount = 0;
+      let residentCount = 0;
+      let visitorCount = 0;
+      let blockCount = 0;
       let pendingCount = 0;
       warned.forEach(v => {
         const r = restrictList.find(x => x.plate === v.plate);
-        if (r && r.status && r.status !== '미처리') doneCount++;
+        const st = r && r.status ? r.status : '미처리';
+        if (st === '입주민 등록' || st === '입주민등록') residentCount++;
+        else if (st === '방문자등록' || st === '방문자등록 이용') visitorCount++;
+        else if (st === '입차제한') blockCount++;
         else pendingCount++;
       });
 
       const statTotal = document.getElementById('restrict-stat-total');
-      const statDone = document.getElementById('restrict-stat-done');
+      const statResident = document.getElementById('restrict-stat-resident');
+      const statVisitor = document.getElementById('restrict-stat-visitor');
+      const statBlock = document.getElementById('restrict-stat-block');
       const statPending = document.getElementById('restrict-stat-pending');
       if (statTotal) statTotal.textContent = warned.length;
-      if (statDone) statDone.textContent = doneCount;
+      if (statResident) statResident.textContent = residentCount;
+      if (statVisitor) statVisitor.textContent = visitorCount;
+      if (statBlock) statBlock.textContent = blockCount;
       if (statPending) statPending.textContent = pendingCount;
 
       // 필터링 및 검색어
