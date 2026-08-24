@@ -1358,6 +1358,18 @@
           <button class="delete-all-btn" id="delete-all-btn" style="display:none">🗑 전체 삭제</button>
         </div>
       </div>
+      <!-- 검색 및 날짜 필터 -->
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <input class="search-input" id="log-search-input" placeholder="🔍 차량번호 뒤 4자리 검색"
+          maxlength="4" inputmode="numeric" style="width:200px;flex-shrink:0" />
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="date" id="log-date-start" class="form-input" style="padding:8px 10px;font-size:13px;width:140px" />
+          <span style="color:#556;font-size:13px">~</span>
+          <input type="date" id="log-date-end" class="form-input" style="padding:8px 10px;font-size:13px;width:140px" />
+        </div>
+        <button class="restrict-filter-btn active" id="log-filter-reset"
+          style="padding:8px 14px;font-size:13px">초기화</button>
+      </div>
       <div class="card">
         <div id="log-list">
           <div class="empty-msg">데이터를 불러오는 중...</div>
@@ -1930,6 +1942,17 @@
     document.getElementById('month-prev').addEventListener('click', () => changeMonth(-1));
     document.getElementById('month-next').addEventListener('click', () => changeMonth(1));
 
+    // 전체 기록 탭 검색 / 날짜 필터 이벤트
+    document.getElementById('log-search-input').addEventListener('input', () => renderLog());
+    document.getElementById('log-date-start').addEventListener('change', () => renderLog());
+    document.getElementById('log-date-end').addEventListener('change', () => renderLog());
+    document.getElementById('log-filter-reset').addEventListener('click', () => {
+      document.getElementById('log-search-input').value = '';
+      document.getElementById('log-date-start').value = '';
+      document.getElementById('log-date-end').value = '';
+      renderLog();
+    });
+
     // ══════════════════════════════════════════════
     //  RENDER ADD TAB
     // ══════════════════════════════════════════════
@@ -1951,11 +1974,31 @@
     function renderLog() {
       const summary = {};
       records.forEach(r => { summary[r.plate] = (summary[r.plate] || 0) + 1; });
-      document.getElementById('log-count').textContent = `총 ${records.length}건의 기록`;
+
+      // 필터값 읽기
+      const searchVal = (document.getElementById('log-search-input')?.value || '').trim();
+      const dateStart = document.getElementById('log-date-start')?.value || '';
+      const dateEnd   = document.getElementById('log-date-end')?.value   || '';
+
+      // 필터 적용
+      const filtered = records.filter(r => {
+        // 차량번호 뒤 4자리 검색
+        if (searchVal && !r.plate.slice(-4).includes(searchVal)) return false;
+        // 시작일 필터
+        if (dateStart && r.date < dateStart) return false;
+        // 종료일 필터
+        if (dateEnd && r.date > dateEnd) return false;
+        return true;
+      });
+
+      document.getElementById('log-count').textContent = `총 ${records.length}건의 기록 (표시: ${filtered.length}건)`;
       document.getElementById('delete-all-btn').style.display = records.length > 0 ? 'block' : 'none';
       const listEl = document.getElementById('log-list');
-      if (records.length === 0) { listEl.innerHTML = '<div class="empty-msg">적발 기록이 없습니다</div>'; return; }
-      listEl.innerHTML = (records || []).map(r => {
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="empty-msg">조건에 맞는 기록이 없습니다</div>';
+        return;
+      }
+      listEl.innerHTML = filtered.map(r => {
         const vc = summary[r.plate] || 0;
         const pb = vc >= 3 ? '#2d0000' : '#0f1320'; const pbr = vc >= 3 ? '#ff444466' : '#1e2a40'; const pc = vc >= 3 ? '#ff6b6b' : '#60b4ff';
         const sn = getStaffName(r.staff);
