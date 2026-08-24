@@ -4,8 +4,3 @@ compatibility_date = "2024-04-01"
 
 [assets]
 directory = "public"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "arlgpm-db"
-database_id = "arlgpm-db"
