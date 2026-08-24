@@ -1367,7 +1367,9 @@
           <span style="color:#556;font-size:13px">~</span>
           <input type="date" id="log-date-end" class="form-input" style="padding:8px 10px;font-size:13px;width:140px" />
         </div>
-        <button class="restrict-filter-btn active" id="log-filter-reset"
+        <button class="submit-btn" id="log-search-btn"
+          style="padding:8px 20px;font-size:13px;border-radius:8px;min-width:0">🔍 검색</button>
+        <button class="restrict-filter-btn" id="log-filter-reset"
           style="padding:8px 14px;font-size:13px">초기화</button>
       </div>
       <div class="card">
@@ -1942,10 +1944,11 @@
     document.getElementById('month-prev').addEventListener('click', () => changeMonth(-1));
     document.getElementById('month-next').addEventListener('click', () => changeMonth(1));
 
-    // 전체 기록 탭 검색 / 날짜 필터 이벤트
-    document.getElementById('log-search-input').addEventListener('input', () => renderLog());
-    document.getElementById('log-date-start').addEventListener('change', () => renderLog());
-    document.getElementById('log-date-end').addEventListener('change', () => renderLog());
+    // 전체 기록 탭: 검색 버튼 또는 Enter 키로만 필터 실행
+    document.getElementById('log-search-btn').addEventListener('click', () => renderLog());
+    document.getElementById('log-search-input').addEventListener('keydown', e => { if (e.key === 'Enter') renderLog(); });
+    document.getElementById('log-date-start').addEventListener('keydown', e => { if (e.key === 'Enter') renderLog(); });
+    document.getElementById('log-date-end').addEventListener('keydown', e => { if (e.key === 'Enter') renderLog(); });
     document.getElementById('log-filter-reset').addEventListener('click', () => {
       document.getElementById('log-search-input').value = '';
       document.getElementById('log-date-start').value = '';
