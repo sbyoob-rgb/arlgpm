@@ -1,0 +1,8 @@
+name = "arlgpm"
+compatibility_date = "2024-04-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "arlgpm-db"
+database_id = "local-d1-binding" # Cloudflare Dashboard에서 D1 생성 후 해당 ID로 교체 (로컬 개발 시 자동 처리)

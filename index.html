@@ -15,16 +15,11 @@
   <!-- Performance Optimization: Preconnect & DNS Prefetch -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="dns-prefetch" href="https://ncyrjjzajgynpasmygwn.supabase.co" />
-  
   <!-- Critical Fonts & Styles -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
   
-  <!-- Library Scripts (Restored to synchronous for reliable initialization) -->
+  <!-- Library Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,
     *::before,
@@ -1355,82 +1350,63 @@
 
   <script>
     // ══════════════════════════════════════════════
-    //  SUPABASE CONFIG
+    //  CLOUDFLARE PAGES FUNCTIONS API CLIENT
     // ══════════════════════════════════════════════
-    const SUPABASE_URL = "https://ncyrjjzajgynpasmygwn.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jeXJqanphamd5bnBhc215Z3duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzU3ODksImV4cCI6MjA4ODMxMTc4OX0.6dD62Ydkf9du2O1B8IoYM-pscWdOjX96IqzOZKFcKd4";
-    function getCfg() { return { url: SUPABASE_URL, key: SUPABASE_KEY }; }
+    function getAuthToken() {
+      return localStorage.getItem('arlgpm_admin_token') || '';
+    }
 
-    // ══════════════════════════════════════════════
-    //  SUPABASE REST API
-    // ══════════════════════════════════════════════
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function sbFetch(path, opts = {}) {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      const token = session ? session.access_token : SUPABASE_KEY;
-      
-      const headers = { 
-        'apikey': SUPABASE_KEY, 
-        'Authorization': 'Bearer ' + token, 
-        'Content-Type': 'application/json', 
-        ...(opts.headers || {}) 
+    function getAuthHeaders() {
+      const token = getAuthToken();
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': 'Bearer ' + token } : {})
       };
-      
-      if (opts.prefer) headers['Prefer'] = opts.prefer;
-      const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, { method: opts.method || 'GET', headers, body: opts.body || undefined });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'HTTP ' + res.status); }
-      const t = await res.text(); return t ? JSON.parse(t) : null;
+    }
+
+    async function apiFetch(path, opts = {}) {
+      const headers = { ...getAuthHeaders(), ...(opts.headers || {}) };
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'HTTP ' + res.status);
+      }
+      return data;
     }
 
     const db = {
       getRecords: async () => {
-        const { data, error } = await supabaseClient.from('fac_records').select('*').order('date', { ascending: false });
-        if (error) throw error; return data;
+        return await apiFetch('/api/records');
       },
       insertRecord: async (r) => {
-        const { data, error } = await supabaseClient.from('fac_records').insert(r).select();
-        if (error) throw error; return data[0];
+        return await apiFetch('/api/records', { method: 'POST', body: JSON.stringify(r) });
       },
       insertRecords: async (rs) => {
-        // ID는 DB에서 생성하도록 제외 (단, 전달받은 데이터에 ID가 있다면 DB 형식에 맞아야 함. 여기선 제외 권장)
-        const cleanRecords = rs.map(({ id, ...rest }) => rest);
-        const { data, error } = await supabaseClient.from('fac_records').insert(cleanRecords).select();
-        if (error) throw error; return data;
+        return await apiFetch('/api/records', { method: 'POST', body: JSON.stringify(rs) });
       },
       deleteRecord: async (id) => {
-        const { error } = await supabaseClient.from('fac_records').delete().eq('id', id);
-        if (error) throw error; return true;
+        return await apiFetch('/api/records/' + encodeURIComponent(id), { method: 'DELETE' });
       },
       deleteAllRecords: async () => {
-        const { error } = await supabaseClient.from('fac_records').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) throw error; return true;
+        return await apiFetch('/api/records', { method: 'DELETE' });
       },
       getStaff: async () => {
-        const { data, error } = await supabaseClient.from('fac_managers').select('*').order('created_at', { ascending: true });
-        if (error) throw error; return data;
+        return await apiFetch('/api/managers');
       },
       insertStaff: async (s) => {
-        const { data, error } = await supabaseClient.from('fac_managers').insert(s).select();
-        if (error) throw error; return data;
+        const row = await apiFetch('/api/managers', { method: 'POST', body: JSON.stringify(s) });
+        return [row];
       },
       deleteStaff: async (id) => {
-        const { error } = await supabaseClient.from('fac_managers').delete().eq('id', id);
-        if (error) throw error; return true;
+        return await apiFetch('/api/managers/' + encodeURIComponent(id), { method: 'DELETE' });
       },
-      // fac_restrict 테이블 필요: CREATE TABLE fac_restrict (plate TEXT PRIMARY KEY, status TEXT, updated_at TIMESTAMPTZ DEFAULT NOW());
       getRestrict: async () => {
         try {
-          const { data, error } = await supabaseClient.from('fac_restrict').select('*');
-          if (error) return [];
-          return data || [];
+          return await apiFetch('/api/restrict');
         } catch { return []; }
       },
       upsertRestrict: async (plate, status) => {
-        const { data, error } = await supabaseClient.from('fac_restrict')
-          .upsert({ plate, status, updated_at: new Date().toISOString() }, { onConflict: 'plate' }).select();
-        if (error) throw error;
-        return data;
+        return await apiFetch('/api/restrict', { method: 'POST', body: JSON.stringify({ plate, status }) });
       }
     };
 
@@ -1458,12 +1434,13 @@
     let pendingAuthCallback = null;    // 인증 성공 후 실행할 콜백
 
     // ── 관리자 버튼 상태 갱신 ──
-    async function updateAdminBtn() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
+    function updateAdminBtn() {
+      const token = getAuthToken();
+      const email = localStorage.getItem('arlgpm_admin_email') || '관리자';
       const btn = document.getElementById('admin-btn');
-      if (session) {
+      if (token) {
         isAdminLoggedIn = true;
-        btn.textContent = '🟢 ' + session.user.email.split('@')[0] + ' (로그아웃)';
+        btn.textContent = '🟢 ' + email.split('@')[0] + ' (로그아웃)';
         btn.classList.add('logged-in');
       } else {
         isAdminLoggedIn = false;
@@ -1475,11 +1452,11 @@
     // ── 관리자 로그인 모달 ──
     function openAdminLogin(callback) {
       pendingAuthCallback = callback;
-      document.getElementById('admin-login-email').value = '';
+      document.getElementById('admin-login-email').value = localStorage.getItem('arlgpm_admin_email') || '';
       document.getElementById('admin-login-pw').value = '';
       document.getElementById('admin-login-err').textContent = '';
       document.getElementById('admin-login-modal').classList.add('show');
-      setTimeout(() => document.getElementById('admin-login-email').focus(), 100);
+      setTimeout(() => document.getElementById('admin-login-pw').focus(), 100);
     }
     document.getElementById('admin-login-cancel').addEventListener('click', () => {
       document.getElementById('admin-login-modal').classList.remove('show');
@@ -1489,7 +1466,7 @@
     document.getElementById('admin-login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
     
     async function doAdminLogin() {
-      const email = document.getElementById('admin-login-email').value;
+      const email = document.getElementById('admin-login-email').value.trim();
       const password = document.getElementById('admin-login-pw').value;
       const err = document.getElementById('admin-login-err');
       const btn = document.getElementById('admin-login-confirm');
@@ -1497,23 +1474,27 @@
       if (!email || !password) { err.textContent = '이메일과 비밀번호를 입력해 주세요.'; return; }
       
       btn.disabled = true; btn.textContent = '인증 중...';
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        err.textContent = '로그인 실패: ' + error.message;
+      try {
+        const res = await apiFetch('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        
+        localStorage.setItem('arlgpm_admin_token', res.token);
+        localStorage.setItem('arlgpm_admin_email', res.email);
+        document.getElementById('admin-login-modal').classList.remove('show');
+        updateAdminBtn();
+        showAlert('ok', res.message ? '✅ ' + res.message : '✅ 관리자 로그인이 완료되었습니다.');
+        
+        if (pendingAuthCallback) {
+          const cb = pendingAuthCallback;
+          pendingAuthCallback = null;
+          cb();
+        }
+      } catch (e) {
+        err.textContent = '로그인 실패: ' + e.message;
+      } finally {
         btn.disabled = false; btn.textContent = '로그인';
-        return;
-      }
-      
-      document.getElementById('admin-login-modal').classList.remove('show');
-      btn.disabled = false; btn.textContent = '로그인';
-      updateAdminBtn();
-      showAlert('ok', '✅ 관리자 로그인이 완료되었습니다.');
-      
-      if (pendingAuthCallback) {
-        const cb = pendingAuthCallback;
-        pendingAuthCallback = null;
-        cb();
       }
     }
 
@@ -1535,7 +1516,7 @@
     // ── 관리자 버튼 클릭 ──
     document.getElementById('admin-btn').addEventListener('click', async () => {
       if (isAdminLoggedIn) {
-        await supabaseClient.auth.signOut();
+        localStorage.removeItem('arlgpm_admin_token');
         updateAdminBtn();
         showAlert('ok', '🔒 로그아웃 되었습니다.');
       } else {
@@ -1543,19 +1524,10 @@
       }
     });
 
-    // 세션 변경 감지
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      updateAdminBtn();
-    });
-
-    // ══════════════════════════════════════════════
-    //  SETUP
-    // ══════════════════════════════════════════════
     // ══════════════════════════════════════════════
     //  INIT
     // ══════════════════════════════════════════════
     async function init() {
-      const cfg = getCfg();
       setStatus('loading');
       try {
         const [resRecords, resStaff, resRestrict] = await Promise.all([db.getRecords(), db.getStaff(), db.getRestrict()]);
@@ -1969,7 +1941,7 @@
     document.getElementById('phone3').addEventListener('keydown', e => { if (e.key === 'Enter') addRecord(); });
 
     async function addRecord() {
-      if (!isConnected) { showAlert('error', 'Supabase에 연결되어 있지 않습니다.'); return; }
+      if (!isConnected) { showAlert('error', '서버에 연결되어 있지 않습니다.'); return; }
       const pA = plateA.value.trim(), pB = plateB.value.trim();
       const date = document.getElementById('input-date').value;
       const staff = document.getElementById('input-staff').value;
@@ -2053,7 +2025,7 @@
     });
 
     async function addStaff() {
-      if (!isConnected) { showAlert('error', 'Supabase에 연결되어 있지 않습니다.'); return; }
+      if (!isConnected) { showAlert('error', '서버에 연결되어 있지 않습니다.'); return; }
       const name = document.getElementById('staff-name-input').value.trim();
       if (!name) { showAlert('error', '담당자 이름을 입력하세요.'); return; }
       if (staffList.find(s => s.name === name)) { showAlert('error', '이미 등록된 이름입니다.'); return; }
