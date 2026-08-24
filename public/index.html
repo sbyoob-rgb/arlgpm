@@ -1063,40 +1063,155 @@
       .log-row > div:last-child { width: 100%; justify-content: space-between; border-top: 1px solid #1e2a40; padding-top: 10px; margin-top: 10px; }
     }
 
-    /* ── 입차제한 탭 ── */
-    .restrict-row {
-      padding: 16px 20px;
-      border-top: 1px solid #12182a;
+    /* ── 입차제한 탭 (오리지널 리치 UI) ── */
+    .restrict-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .restrict-filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .restrict-filter-btn {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 8px;
+      color: #778;
+      padding: 7px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .restrict-filter-btn:hover {
+      background: #1a1e2e;
+      color: #dde;
+    }
+    .restrict-filter-btn.active {
+      background: #1e3a5f;
+      border-color: #2a5080;
+      color: #60b4ff;
+      font-weight: 700;
+    }
+    .restrict-card-item {
+      background: #0f1320;
+      border: 1px solid #1e2a40;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      transition: border-color .2s;
+    }
+    .restrict-card-item:hover {
+      border-color: #2a4070;
+    }
+    .restrict-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .restrict-plate-title {
+      font-weight: 800;
+      font-size: 18px;
+      color: #4eca8b;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .restrict-warn-count {
+      background: linear-gradient(135deg, #ff2d2d, #cc0000);
+      color: #fff;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 0 10px #ff2d2d44;
+    }
+    .restrict-last-date {
+      font-size: 12px;
+      color: #667;
+    }
+    .restrict-log-list {
+      margin: 10px 0 14px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .restrict-log-item {
+      font-size: 12px;
+      color: #667;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .restrict-log-phone {
+      color: #cc8866;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .restrict-bottom-bar {
+      background: #080b14;
+      border: 1px solid #1a2338;
+      border-radius: 8px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 8px;
     }
-    .restrict-row:first-child { border-top: none; }
-    .restrict-plate { font-weight: 800; font-size: 17px; color: #ff6b6b; letter-spacing: 2px; }
-    .restrict-meta { font-size: 12px; color: #667; margin-top: 3px; }
-    .restrict-status-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-    .restrict-btn {
-      border-radius: 7px; padding: 7px 13px; cursor: pointer;
-      font-size: 12px; font-weight: 700; font-family: inherit;
-      transition: all .2s; opacity: 0.5;
+    .restrict-status-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
-    .restrict-btn.active { opacity: 1; }
-    .restrict-btn-resident { background: #0a1f14; border: 1px solid #2ecc7144; color: #4eca8b; }
-    .restrict-btn-resident.active { background: #1a4028; border-color: #2ecc71; box-shadow: 0 0 8px #2ecc7133; }
-    .restrict-btn-block { background: #1a0808; border: 1px solid #ff444444; color: #ff6b6b; }
-    .restrict-btn-block.active { background: #3d0000; border-color: #ff4444; box-shadow: 0 0 8px #ff444433; }
-    .restrict-btn-visitor { background: #0f1a30; border: 1px solid #60b4ff44; color: #60b4ff; }
-    .restrict-btn-visitor.active { background: #1a2a45; border-color: #60b4ff; box-shadow: 0 0 8px #60b4ff33; }
     .restrict-status-badge {
-      font-size: 11px; font-weight: 700; border-radius: 5px;
-      padding: 3px 9px; margin-top: 6px; display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
-    .restrict-badge-none { background: #1a1e2e; color: #445; border: 1px solid #2a3040; }
+    .restrict-badge-none { background: #1a1e2e; color: #778; border: 1px solid #2a3040; }
     .restrict-badge-resident { background: #0a1f14; color: #4eca8b; border: 1px solid #2ecc7144; }
     .restrict-badge-block { background: #1a0808; color: #ff6b6b; border: 1px solid #ff444444; }
     .restrict-badge-visitor { background: #0f1a30; color: #60b4ff; border: 1px solid #60b4ff44; }
+    .restrict-meta-text {
+      font-size: 12px;
+      color: #667;
+    }
+    .restrict-memo-text {
+      font-size: 12px;
+      color: #aab;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .restrict-edit-btn {
+      background: #1a2338;
+      border: 1px solid #2a3a50;
+      border-radius: 6px;
+      color: #aab;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .restrict-edit-btn:hover {
+      background: #25334d;
+      color: #fff;
+    }
   </style>
 </head>
 
@@ -1270,14 +1385,50 @@
 
     <!-- ══ RESTRICT ══ -->
     <div id="tab-restrict" class="tab-panel">
-      <div class="log-header">
-        <div>
-          <div class="log-title">입차제한 관리</div>
-          <div class="log-sub" id="restrict-count">경고 대상 차량 0건</div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:22px;font-weight:900;display:flex;align-items:center;gap:8px;margin-bottom:4px;color:#fff">
+          <span>🚫</span> <span>입차제한 관리</span>
+        </div>
+        <div style="font-size:13px;color:#667">3회 이상 적발 차량에 대한 처리를 수행합니다.</div>
+      </div>
+
+      <!-- 3개 통계 카드 -->
+      <div class="restrict-stats-grid">
+        <div class="stat-card" style="border-left:3px solid #ff4444">
+          <div class="stat-icon" style="color:#ff4444">🚨</div>
+          <div class="stat-value" id="restrict-stat-total" style="color:#ff4444">0</div>
+          <div class="stat-label">전체 경고 차량</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #2ecc71">
+          <div class="stat-icon" style="color:#2ecc71">✅</div>
+          <div class="stat-value" id="restrict-stat-done" style="color:#2ecc71">0</div>
+          <div class="stat-label">처리 완료</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #f59e0b">
+          <div class="stat-icon" style="color:#f59e0b">⌛</div>
+          <div class="stat-value" id="restrict-stat-pending" style="color:#f59e0b">0</div>
+          <div class="stat-label">미처리</div>
         </div>
       </div>
+
+      <!-- 5개 필터 버튼 -->
+      <div class="restrict-filter-bar">
+        <button class="restrict-filter-btn active" data-filter="all">전체</button>
+        <button class="restrict-filter-btn" data-filter="pending">⌛ 미처리</button>
+        <button class="restrict-filter-btn" data-filter="resident">🏠 입주민등록</button>
+        <button class="restrict-filter-btn" data-filter="block">🚫 입차제한</button>
+        <button class="restrict-filter-btn" data-filter="visitor">🪪 방문자등록</button>
+      </div>
+
+      <!-- 리스트 카드 -->
       <div class="card">
-        <div id="restrict-list">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px">
+            <span>🚫</span> <span>입차제한 대상 차량</span>
+          </div>
+          <input class="search-input" id="restrict-search-input" placeholder="🔍 차량번호 검색" />
+        </div>
+        <div id="restrict-list" style="padding:20px">
           <div class="empty-msg">데이터를 불러오는 중...</div>
         </div>
       </div>
@@ -1348,6 +1499,38 @@
     </div>
   </div>
 
+  <!-- ══ 입차제한 상태 변경 모달 ══ -->
+  <div id="restrict-edit-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width:440px;text-align:left">
+      <div style="font-weight:800;font-size:18px;margin-bottom:6px;display:flex;align-items:center;gap:8px;color:#fff">
+        <span>🚫</span> <span>입차제한 상태 변경</span>
+      </div>
+      <div style="font-size:13px;color:#667;margin-bottom:18px">
+        대상 차량: <span id="modal-restrict-plate" style="color:#4eca8b;font-weight:800;font-size:16px;letter-spacing:1px"></span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">처리 상태 선택 *</label>
+        <select class="form-select" id="modal-restrict-status">
+          <option value="미처리">⌛ 미처리</option>
+          <option value="입주민 등록">🏠 입주민 등록</option>
+          <option value="입차제한">🚫 입차제한</option>
+          <option value="방문자등록">🪪 방문자등록</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">메모 / 사유</label>
+        <input class="form-input" id="modal-restrict-memo" placeholder="예: 상가차량. 등록 예정 / 203동1203호 어머니" />
+      </div>
+
+      <div class="modal-btns" style="justify-content:flex-end;margin-top:20px">
+        <button class="modal-cancel" id="modal-restrict-cancel">취소</button>
+        <button class="modal-confirm" id="modal-restrict-save" style="background:linear-gradient(90deg,#1565c0,#1976d2)">💾 저장</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ══════════════════════════════════════════════
     //  CLOUDFLARE PAGES FUNCTIONS API CLIENT
@@ -1405,8 +1588,8 @@
           return await apiFetch('/api/restrict');
         } catch { return []; }
       },
-      upsertRestrict: async (plate, status) => {
-        return await apiFetch('/api/restrict', { method: 'POST', body: JSON.stringify({ plate, status }) });
+      upsertRestrict: async (plate, status, memo = '', updated_by = '') => {
+        return await apiFetch('/api/restrict', { method: 'POST', body: JSON.stringify({ plate, status, memo, updated_by }) });
       }
     };
 
@@ -1416,6 +1599,8 @@
     let records = [];
     let staffList = [];
     let restrictList = [];
+    let currentRestrictFilter = 'all';
+    let editingRestrictPlate = null;
     let deleteTargetId = null;
     let deleteMode = null;
     let pendingImport = null;
@@ -1621,13 +1806,15 @@
         wb.style.display = 'block';
         document.getElementById('warn-list').innerHTML = warned.map(v => {
           const r = restrictList.find(x => x.plate === v.plate);
-          const status = r ? r.status : null;
-          const statusBadge = status ? `<span class="restrict-status-badge ${
-            status === '임주민 등록' ? 'restrict-badge-resident' :
-            status === '입차제한' ? 'restrict-badge-block' :
+          const isResident = status === '입주민 등록' || status === '입주민등록' || status === '임주민 등록';
+          const isBlock = status === '입차제한';
+          const isVisitor = status === '방문자등록' || status === '방문자등록 이용';
+          const statusBadge = (status && status !== '미처리') ? `<span class="restrict-status-badge ${
+            isResident ? 'restrict-badge-resident' :
+            isBlock ? 'restrict-badge-block' :
             'restrict-badge-visitor'
           }" style="margin-top:0; margin-left:8px; vertical-align:middle;">${
-            status === '임주민 등록' ? '🏠 ' : status === '입차제한' ? '🚫 ' : '🪪 '
+            isResident ? '🏠 ' : isBlock ? '🚫 ' : '🪪 '
           }${status}</span>` : '<span class="restrict-status-badge restrict-badge-none" style="margin-top:0; margin-left:8px; vertical-align:middle;">⏳ 미처리</span>';
 
           const notes = v.logs.filter(l => l.note).map(l =>
@@ -1805,60 +1992,195 @@
     function renderAll() { renderDashboard(); renderAddTab(); renderLog(); renderStaffTab(); renderRestrictTab(); }
 
     // ══════════════════════════════════════════════
-    //  RENDER RESTRICT TAB
+    //  RENDER RESTRICT TAB (오리지널 리치 UI)
     // ══════════════════════════════════════════════
+    function formatRestrictDate(dStr) {
+      if (!dStr) return '';
+      try {
+        const d = new Date(dStr);
+        if (isNaN(d.getTime())) return dStr;
+        return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
+      } catch { return dStr; }
+    }
+
     function renderRestrictTab() {
       const warned = getSummary().filter(v => v.count >= 3);
-      document.getElementById('restrict-count').textContent = `경고 대상 차량 ${warned.length}건`;
+      
+      // 통계 계산
+      let doneCount = 0;
+      let pendingCount = 0;
+      warned.forEach(v => {
+        const r = restrictList.find(x => x.plate === v.plate);
+        if (r && r.status && r.status !== '미처리') doneCount++;
+        else pendingCount++;
+      });
+
+      const statTotal = document.getElementById('restrict-stat-total');
+      const statDone = document.getElementById('restrict-stat-done');
+      const statPending = document.getElementById('restrict-stat-pending');
+      if (statTotal) statTotal.textContent = warned.length;
+      if (statDone) statDone.textContent = doneCount;
+      if (statPending) statPending.textContent = pendingCount;
+
+      // 필터링 및 검색어
+      const searchEl = document.getElementById('restrict-search-input');
+      const search = (searchEl ? searchEl.value : '').trim().toUpperCase();
+
+      const filtered = warned.filter(v => {
+        const r = restrictList.find(x => x.plate === v.plate);
+        const status = r ? r.status : '미처리';
+
+        // 상태 필터
+        if (currentRestrictFilter === 'pending' && status !== '미처리') return false;
+        if (currentRestrictFilter === 'resident' && status !== '입주민 등록' && status !== '입주민등록') return false;
+        if (currentRestrictFilter === 'block' && status !== '입차제한') return false;
+        if (currentRestrictFilter === 'visitor' && status !== '방문자등록' && status !== '방문자등록 이용') return false;
+
+        // 검색어 필터
+        if (search && !v.plate.toUpperCase().includes(search)) return false;
+
+        return true;
+      });
+
       const listEl = document.getElementById('restrict-list');
-      if (warned.length === 0) {
-        listEl.innerHTML = '<div class="empty-msg">경고 대상 차량이 없습니다</div>';
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="empty-msg" style="padding:40px">조건에 맞는 차량이 없습니다</div>';
         return;
       }
-      listEl.innerHTML = warned.map(v => {
+
+      listEl.innerHTML = filtered.map(v => {
         const r = restrictList.find(x => x.plate === v.plate);
-        const status = r ? r.status : null;
-        const statusBadgeClass = status === '임주민 등록' ? 'restrict-badge-resident'
-          : status === '입차제한' ? 'restrict-badge-block'
-          : status === '방문자등록 이용' ? 'restrict-badge-visitor'
-          : 'restrict-badge-none';
-        const statusBadgeIcon = status === '임주민 등록' ? '🏠 임주민 등록'
-          : status === '입차제한' ? '🚫 입차제한'
-          : status === '방문자등록 이용' ? '🪪 방문자등록 이용'
-          : '⏳ 미처리';
-        return `<div class="restrict-row">
-          <div>
-            <div class="restrict-plate">${v.plate}</div>
-            <div class="restrict-meta">총 ${v.count}회 적발 · 마지막: ${v.lastDate}</div>
-            <div><span class="restrict-status-badge ${statusBadgeClass}">${statusBadgeIcon}</span></div>
-            <div class="restrict-status-btns">
-              <button class="restrict-btn restrict-btn-resident${status === '임주민 등록' ? ' active' : ''}" data-plate="${v.plate}" data-status="임주민 등록">🏠 임주민 등록</button>
-              <button class="restrict-btn restrict-btn-block${status === '입차제한' ? ' active' : ''}" data-plate="${v.plate}" data-status="입차제한">🚫 입차제한</button>
-              <button class="restrict-btn restrict-btn-visitor${status === '방문자등록 이용' ? ' active' : ''}" data-plate="${v.plate}" data-status="방문자등록 이용">🪪 방문자등록 이용</button>
+        const status = r ? r.status : '미처리';
+        const memo = r ? (r.memo || '') : '';
+        const updatedBy = r ? (r.updated_by || 'sbyoob') : '';
+        const dateStr = r && r.updated_at ? formatRestrictDate(r.updated_at) : '';
+
+        // 상태 뱃지
+        let badgeClass = 'restrict-badge-none';
+        let badgeIcon = '⌛ 미처리';
+        if (status === '입주민 등록' || status === '입주민등록') {
+          badgeClass = 'restrict-badge-resident';
+          badgeIcon = '🏠 입주민 등록';
+        } else if (status === '입차제한') {
+          badgeClass = 'restrict-badge-block';
+          badgeIcon = '🚫 입차제한';
+        } else if (status === '방문자등록' || status === '방문자등록 이용') {
+          badgeClass = 'restrict-badge-visitor';
+          badgeIcon = '🪪 방문자등록';
+        }
+
+        // 적발 이력 리스트 (최신순)
+        const sortedLogs = [...v.logs].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const logsHTML = sortedLogs.map(l => {
+          return `<div class="restrict-log-item">
+            <span>${l.date}</span>
+            ${l.note ? `<span class="restrict-log-phone">📞 ${l.note}</span>` : ''}
+          </div>`;
+        }).join('');
+
+        // 메타 및 메모
+        const metaInfo = dateStr ? `<span class="restrict-meta-text">${dateStr} · ${updatedBy}</span>` : '';
+        const memoInfo = memo ? `<span class="restrict-memo-text">📄 ${memo}</span>` : '';
+
+        return `<div class="restrict-card-item">
+          <div class="restrict-card-header">
+            <div class="restrict-plate-title">
+              <span>${v.plate}</span>
+              <span class="restrict-warn-count">🚨 ${v.count}회</span>
             </div>
+            <div class="restrict-last-date">마지막: ${v.lastDate}</div>
           </div>
-          <div style="font-size:12px;color:#445;text-align:right">⚠ 경고 ${v.count}회</div>
+          
+          <div class="restrict-log-list">
+            ${logsHTML}
+          </div>
+
+          <div class="restrict-bottom-bar">
+            <div class="restrict-status-info">
+              <span class="restrict-status-badge ${badgeClass}">${badgeIcon}</span>
+              ${metaInfo}
+              ${memoInfo}
+            </div>
+            <button class="restrict-edit-btn" data-plate="${v.plate}">변경</button>
+          </div>
         </div>`;
       }).join('');
-      listEl.querySelectorAll('.restrict-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
+
+      // [변경] 버튼 클릭 이벤트
+      listEl.querySelectorAll('.restrict-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
           const plate = btn.dataset.plate;
-          const status = btn.dataset.status;
-          btn.disabled = true;
-          try {
-            await db.upsertRestrict(plate, status);
-            const idx = restrictList.findIndex(x => x.plate === plate);
-            if (idx >= 0) restrictList[idx].status = status;
-            else restrictList.push({ plate, status });
-            showAlert('ok', `✅ ${plate} — ${status} 처리 완료`);
-            renderRestrictTab();
-          } catch (e) {
-            showAlert('error', '처리 실패: ' + e.message);
-            btn.disabled = false;
-          }
+          requireAdmin('🚫', '관리자 인증 필요', '입차제한 상태 변경은 관리자만 수행할 수 있습니다.\n로그인이 필요합니다.', () => {
+            openRestrictModal(plate);
+          });
         });
       });
     }
+
+    // 필터 버튼 클릭 리스너
+    document.querySelectorAll('.restrict-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.restrict-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRestrictFilter = btn.dataset.filter;
+        renderRestrictTab();
+      });
+    });
+
+    // 검색창 리스너
+    const restrictSearchInput = document.getElementById('restrict-search-input');
+    if (restrictSearchInput) {
+      restrictSearchInput.addEventListener('input', renderRestrictTab);
+    }
+
+    // ── 상태 변경 모달 제어 ──
+    function openRestrictModal(plate) {
+      editingRestrictPlate = plate;
+      const r = restrictList.find(x => x.plate === plate);
+      document.getElementById('modal-restrict-plate').textContent = plate;
+      
+      const sel = document.getElementById('modal-restrict-status');
+      sel.value = r && r.status ? (r.status === '방문자등록 이용' ? '방문자등록' : r.status) : '미처리';
+      document.getElementById('modal-restrict-memo').value = r ? (r.memo || '') : '';
+
+      document.getElementById('restrict-edit-modal').classList.add('show');
+    }
+
+    document.getElementById('modal-restrict-cancel').addEventListener('click', () => {
+      document.getElementById('restrict-edit-modal').classList.remove('show');
+      editingRestrictPlate = null;
+    });
+
+    document.getElementById('modal-restrict-save').addEventListener('click', async () => {
+      if (!editingRestrictPlate) return;
+      const plate = editingRestrictPlate;
+      const status = document.getElementById('modal-restrict-status').value;
+      const memo = document.getElementById('modal-restrict-memo').value.trim();
+      const adminEmail = localStorage.getItem('arlgpm_admin_email') || '관리자';
+      const updatedBy = adminEmail.split('@')[0];
+
+      const saveBtn = document.getElementById('modal-restrict-save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '저장 중...';
+
+      try {
+        await db.upsertRestrict(plate, status, memo, updatedBy);
+        const idx = restrictList.findIndex(x => x.plate === plate);
+        const newObj = { plate, status, memo, updated_by: updatedBy, updated_at: new Date().toISOString() };
+        if (idx >= 0) restrictList[idx] = { ...restrictList[idx], ...newObj };
+        else restrictList.push(newObj);
+
+        document.getElementById('restrict-edit-modal').classList.remove('show');
+        showAlert('ok', `✅ ${plate} — ${status} 변경 완료`);
+        renderRestrictTab();
+      } catch (e) {
+        showAlert('error', '상태 변경 실패: ' + e.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 저장';
+        editingRestrictPlate = null;
+      }
+    });
 
     // ══════════════════════════════════════════════
     //  TABS
