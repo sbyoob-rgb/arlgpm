@@ -1,15 +1,9 @@
--- Cloudflare D1 Migration Seed Data
--- Generated at: 2026-08-24T13:52:52.678063
-
--- 1. Managers
 INSERT OR REPLACE INTO fac_managers (id, name, created_at) VALUES ('4597ff83-2268-4dc6-9206-28378df5f91b', '진호선', '2026-04-05T12:24:34.435149+00:00');
 INSERT OR REPLACE INTO fac_managers (id, name, created_at) VALUES ('daa10cda-1777-4c29-84bd-3bd91b484c8b', '곽판식', '2026-04-05T12:24:49.974637+00:00');
 INSERT OR REPLACE INTO fac_managers (id, name, created_at) VALUES ('bc383a2e-d18c-4e0f-8ae5-0ea1d28e57a7', '정재영', '2026-04-05T12:24:56.769044+00:00');
 INSERT OR REPLACE INTO fac_managers (id, name, created_at) VALUES ('d0468cf1-723a-4bd2-a1ac-3a82ad3065af', '김금석', '2026-04-05T12:25:08.2873+00:00');
 INSERT OR REPLACE INTO fac_managers (id, name, created_at) VALUES ('898b6404-200c-4c7e-8e25-91cc4e632f46', '박선종', '2026-04-05T12:25:18.277578+00:00');
 INSERT OR REPLACE INTO fac_managers (id, name, created_at) VALUES ('b88cbd52-e448-40f1-9984-6db448f77f3f', '손호규', '2026-04-08T00:45:05.326445+00:00');
-
--- 2. Records
 INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VALUES ('942bbf23-c1a0-40d7-9ffa-63a66273f486', '27무4861', '2026-04-01', '정재영', '', '2026-04-05T12:12:03.674057+00:00');
 INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VALUES ('3c02bcdd-7c8b-4f10-860f-655fe1c6e710', '26도0845', '2026-04-01', '곽판식', '', '2026-04-05T12:12:03.674057+00:00');
 INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VALUES ('e888004c-d04a-4b73-b032-515e46e4cd80', '823우3449', '2026-04-01', '곽판식', '', '2026-04-05T12:12:03.674057+00:00');
@@ -512,6 +506,4 @@ INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VA
 INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VALUES ('b2cfe72a-1c96-42a1-94eb-fec28fad6cb8', '13부8856', '2026-08-23', 'daa10cda-1777-4c29-84bd-3bd91b484c8b', '010-2351-1040', '2026-08-23T06:57:28.732429+00:00');
 INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VALUES ('b2e91930-24ac-47ba-896f-d4b1461e8f4c', '경기84가5833', '2026-08-23', 'bc383a2e-d18c-4e0f-8ae5-0ea1d28e57a7', '', '2026-08-23T11:17:15.522602+00:00');
 INSERT OR REPLACE INTO fac_records (id, plate, date, staff, note, created_at) VALUES ('4932c754-a72f-487e-8f1c-80291a602d48', '03조0195', '2026-08-23', 'bc383a2e-d18c-4e0f-8ae5-0ea1d28e57a7', '', '2026-08-23T11:18:06.099931+00:00');
-
--- 3. Restrict
 INSERT OR REPLACE INTO fac_restrict (plate, status, updated_at) VALUES ('56나3443', '방문자등록 이용', '2026-05-03T06:52:27.951+00:00');
