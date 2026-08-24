@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS fac_managers (
 CREATE TABLE IF NOT EXISTS fac_restrict (
     plate TEXT PRIMARY KEY,
     status TEXT NOT NULL,
+    memo TEXT,
+    updated_by TEXT,
     updated_at TEXT DEFAULT (datetime('now'))
 );
 
