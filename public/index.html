@@ -1830,6 +1830,7 @@
         wb.style.display = 'block';
         document.getElementById('warn-list').innerHTML = warned.map(v => {
           const r = restrictList.find(x => x.plate === v.plate);
+          const status = r ? r.status : '';
           const isResident = status === '입주민 등록' || status === '입주민등록' || status === '임주민 등록';
           const isBlock = status === '입차제한';
           const isVisitor = status === '방문자등록' || status === '방문자등록 이용';
