@@ -1056,6 +1056,7 @@
     @media (max-width: 768px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .staff-stats-grid { grid-template-columns: 1fr; }
+      .restrict-stats-grid { grid-template-columns: repeat(3, 1fr); }
       #header { flex-direction: column; align-items: flex-start; padding: 12px 20px; }
       .tab-nav { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; }
       .stat-value { font-size: 22px; }
@@ -1066,7 +1067,7 @@
     /* ── 입차제한 탭 (오리지널 리치 UI) ── */
     .restrict-stats-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
       margin-bottom: 20px;
     }
@@ -1185,6 +1186,7 @@
     .restrict-badge-resident { background: #0a1f14; color: #4eca8b; border: 1px solid #2ecc7144; }
     .restrict-badge-block { background: #1a0808; color: #ff6b6b; border: 1px solid #ff444444; }
     .restrict-badge-visitor { background: #0f1a30; color: #60b4ff; border: 1px solid #60b4ff44; }
+    .restrict-badge-request { background: #1f1435; color: #a78bfa; border: 1px solid #a78bfa44; }
     .restrict-meta-text {
       font-size: 12px;
       color: #667;
@@ -1406,12 +1408,22 @@
         <div style="font-size:13px;color:#667">3회 이상 적발 차량에 대한 처리를 수행합니다.</div>
       </div>
 
-      <!-- 3개 통계 카드 -->
+      <!-- 6개 통계 카드 -->
       <div class="restrict-stats-grid">
         <div class="stat-card" style="border-left:3px solid #ff4444">
           <div class="stat-icon" style="color:#ff4444">🚨</div>
           <div class="stat-value" id="restrict-stat-total" style="color:#ff4444">0</div>
           <div class="stat-label">전체 경고 차량</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #f59e0b">
+          <div class="stat-icon" style="color:#f59e0b">⌛</div>
+          <div class="stat-value" id="restrict-stat-pending" style="color:#f59e0b">0</div>
+          <div class="stat-label">미처리</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #a78bfa">
+          <div class="stat-icon" style="color:#a78bfa">📩</div>
+          <div class="stat-value" id="restrict-stat-request" style="color:#a78bfa">0</div>
+          <div class="stat-label">등록요청</div>
         </div>
         <div class="stat-card" style="border-left:3px solid #4eca8b">
           <div class="stat-icon" style="color:#4eca8b">🏠</div>
@@ -1428,20 +1440,16 @@
           <div class="stat-value" id="restrict-stat-block" style="color:#ff6b6b">0</div>
           <div class="stat-label">입차제한</div>
         </div>
-        <div class="stat-card" style="border-left:3px solid #f59e0b">
-          <div class="stat-icon" style="color:#f59e0b">⌛</div>
-          <div class="stat-value" id="restrict-stat-pending" style="color:#f59e0b">0</div>
-          <div class="stat-label">미처리</div>
-        </div>
       </div>
 
-      <!-- 5개 필터 버튼 -->
+      <!-- 6개 필터 버튼 -->
       <div class="restrict-filter-bar">
         <button class="restrict-filter-btn active" data-filter="all">전체</button>
         <button class="restrict-filter-btn" data-filter="pending">⌛ 미처리</button>
+        <button class="restrict-filter-btn" data-filter="request">📩 등록요청</button>
         <button class="restrict-filter-btn" data-filter="resident">🏠 입주민등록</button>
-        <button class="restrict-filter-btn" data-filter="block">🚫 입차제한</button>
         <button class="restrict-filter-btn" data-filter="visitor">🪪 방문자등록</button>
+        <button class="restrict-filter-btn" data-filter="block">🚫 입차제한</button>
       </div>
 
       <!-- 리스트 카드 -->
@@ -1537,6 +1545,7 @@
         <label class="form-label">처리 상태 선택 *</label>
         <select class="form-select" id="modal-restrict-status">
           <option value="미처리">⌛ 미처리</option>
+          <option value="등록요청">📩 등록요청</option>
           <option value="입주민 등록">🏠 입주민 등록</option>
           <option value="입차제한">🚫 입차제한</option>
           <option value="방문자등록">🪪 방문자등록</option>
@@ -1834,12 +1843,15 @@
           const isResident = status === '입주민 등록' || status === '입주민등록' || status === '임주민 등록';
           const isBlock = status === '입차제한';
           const isVisitor = status === '방문자등록' || status === '방문자등록 이용';
+          const isRequest = status === '등록요청';
           const statusBadge = (status && status !== '미처리') ? `<span class="restrict-status-badge ${
             isResident ? 'restrict-badge-resident' :
             isBlock ? 'restrict-badge-block' :
-            'restrict-badge-visitor'
+            isVisitor ? 'restrict-badge-visitor' :
+            isRequest ? 'restrict-badge-request' :
+            'restrict-badge-none'
           }" style="margin-top:0; margin-left:8px; vertical-align:middle;">${
-            isResident ? '🏠 ' : isBlock ? '🚫 ' : '🪪 '
+            isResident ? '🏠 ' : isBlock ? '🚫 ' : isVisitor ? '🪪 ' : isRequest ? '📩 ' : ''
           }${status}</span>` : '<span class="restrict-status-badge restrict-badge-none" style="margin-top:0; margin-left:8px; vertical-align:middle;">⏳ 미처리</span>';
 
           const notes = v.logs.filter(l => l.note).map(l =>
@@ -2067,6 +2079,7 @@
       let residentCount = 0;
       let visitorCount = 0;
       let blockCount = 0;
+      let requestCount = 0;
       let pendingCount = 0;
       warned.forEach(v => {
         const r = restrictList.find(x => x.plate === v.plate);
@@ -2074,6 +2087,7 @@
         if (st === '입주민 등록' || st === '입주민등록') residentCount++;
         else if (st === '방문자등록' || st === '방문자등록 이용') visitorCount++;
         else if (st === '입차제한') blockCount++;
+        else if (st === '등록요청') requestCount++;
         else pendingCount++;
       });
 
@@ -2081,11 +2095,13 @@
       const statResident = document.getElementById('restrict-stat-resident');
       const statVisitor = document.getElementById('restrict-stat-visitor');
       const statBlock = document.getElementById('restrict-stat-block');
+      const statRequest = document.getElementById('restrict-stat-request');
       const statPending = document.getElementById('restrict-stat-pending');
       if (statTotal) statTotal.textContent = warned.length;
       if (statResident) statResident.textContent = residentCount;
       if (statVisitor) statVisitor.textContent = visitorCount;
       if (statBlock) statBlock.textContent = blockCount;
+      if (statRequest) statRequest.textContent = requestCount;
       if (statPending) statPending.textContent = pendingCount;
 
       // 필터링 및 검색어
@@ -2098,6 +2114,7 @@
 
         // 상태 필터
         if (currentRestrictFilter === 'pending' && status !== '미처리') return false;
+        if (currentRestrictFilter === 'request' && status !== '등록요청') return false;
         if (currentRestrictFilter === 'resident' && status !== '입주민 등록' && status !== '입주민등록') return false;
         if (currentRestrictFilter === 'block' && status !== '입차제한') return false;
         if (currentRestrictFilter === 'visitor' && status !== '방문자등록' && status !== '방문자등록 이용') return false;
@@ -2133,6 +2150,9 @@
         } else if (status === '방문자등록' || status === '방문자등록 이용') {
           badgeClass = 'restrict-badge-visitor';
           badgeIcon = '🪪 방문자등록';
+        } else if (status === '등록요청') {
+          badgeClass = 'restrict-badge-request';
+          badgeIcon = '📩 등록요청';
         }
 
         // 적발 이력 리스트 (최신순)
